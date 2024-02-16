@@ -1,0 +1,6 @@
+[submodule "razer_hydra"]
+	path = razer_hydra
+	url = git@github.com:JackHaoyingZhou/razer_hydra.git
+[submodule "visualization_tutorials"]
+	path = visualization_tutorials
+	url = git@github.com:ylz15/visualization_tutorials.git
