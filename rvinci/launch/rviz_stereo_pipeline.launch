@@ -6,6 +6,7 @@
   <!-- Make sure left/right are correct -->
   <arg name="left_cam_device" default="1"/>
   <arg name="right_cam_device" default="0"/>
+  <arg name="rig_name" default="test"/>
 
   <!-- Arbitrary transform as an example, just need to publish to "/$(arg rig_name)_stereo_frame" -->
   <!-- -0.05683 -2.6828 -2.0125 0.52573 -0.0026286 -0.0042531 0.85063 -->
