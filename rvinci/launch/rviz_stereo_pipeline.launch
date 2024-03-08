@@ -6,7 +6,7 @@
   <!-- Make sure left/right are correct -->
   <arg name="left_cam_device" default="1"/>
   <arg name="right_cam_device" default="0"/>
-  <arg name="rig_name" default="test"/>
+  <arg name="rig_name" default="jhu_daVinci"/>
 
   <!-- Arbitrary transform as an example, just need to publish to "/$(arg rig_name)_stereo_frame" -->
   <!-- -0.05683 -2.6828 -2.0125 0.52573 -0.0026286 -0.0042531 0.85063 -->
@@ -15,7 +15,7 @@
   <!-- left camera driver node -->
   <include ns="$(arg rig_name)/stereo_raw" file="$(find dvrk_stereo)/launch/gscam_stereo_single.launch">
     <arg name="camera_name" value="left"/>
-    <arg name="camera_info_url" value="package://dvrk_config/$(arg rig_name)/left_camera_parameters.yaml"/>
+    <arg name="camera_info_url" value="package://dvrk_config/$(arg rig_name)/left.yaml"/>
     <arg name="device" value="$(arg left_cam_device)"/>
     <arg name="frame_id" value="$(arg rig_name)_stereo_frame"/>
   </include>
@@ -23,7 +23,7 @@
   <!-- camera driver node -->
   <include ns="$(arg rig_name)/stereo_raw" file="$(find dvrk_stereo)/launch/gscam_stereo_single.launch">
     <arg name="camera_name" value="right"/>
-    <arg name="camera_info_url" value="package://dvrk_config/$(arg rig_name)/right_camera_parameters.yaml"/>
+    <arg name="camera_info_url" value="package://dvrk_config/$(arg rig_name)/right.yaml"/>
     <arg name="device" value="$(arg right_cam_device)"/>
     <arg name="frame_id" value="$(arg rig_name)_stereo_frame"/>
   </include>

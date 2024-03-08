@@ -59,3 +59,29 @@ To launch rvinci with interactive mode:
 ```bash
 roslaunch rvinci rvinci_interactive.launch
 ```
+
+# How to calibrate and move the calibration file (.yaml) to correct camera_info_url
+First, bring up the stereo camera:
+```bash
+roslaunch dvrk_video jhu_daVinci_video.launch
+```
+
+Run the calibration file (.py) program from ros package:
+```bash
+rosrun camera_calibration cameracalibrator.py --size 10x12 --square 0.0045 right:=/jhu_daVinci/right/decklink/jhu_daVinci_right/image_raw left:=/jhu_daVinci/left/decklink/jhu_daVinci_left/image_raw right_camera:=/jhu_daVinci/right/decklink left_camera:=/jhu_daVinci/left/decklink --approximate=0.050
+```
+ (furthre expand the details about grid size, camera name, raw image name blablabla)
+
+If there is no camera_calibration package found in local, please visit ros.org for further installation tutorial.
+
+
+Save results:
+
+- Click 'Calibrate' to finalize the calibration
+- Save: Click 'Save' and the calibration result is saved to /tmp/calibrationdata.tar.gz (you will see this instruction outputed on screen)
+- Commit button to save (note camera_info_url should be correct)
+
+## Untar calibration.tar file and there will be 'left.yaml' and 'right.yaml'
+## Move the two .yaml files to /home/jwang429/catkin_ws/src/cisst-saw/sawIntuitiveResearchKit/share/jhu-daVinci
+
+
