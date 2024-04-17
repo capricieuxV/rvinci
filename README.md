@@ -2,7 +2,7 @@
 This repository is based on RVinci from https://github.com/simonleonard/rvinci and 3D interaction cursors from https://github.com/aleeper/interaction_cursor_3d.
 If you want to use our interactive mode, it is dependent on interactive marker tutorials package from https://github.com/ros-visualization/visualization_tutorials.
 
-*After cloning the repo, modify rviz!stereo_pipeline.launch under rvinci/launch/.
+*After cloning the repo, modify rviz_stereo_pipeline.launch under rvinci/launch/!
 
 
 # How to Install 
