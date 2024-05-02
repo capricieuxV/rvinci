@@ -753,6 +753,7 @@ void rvinciDisplay::publishMeasurementMarkers()
   switch (measurement_status_)
   {
     case _BEGIN:
+      marker_arr.markers.push_back( makeTextMessage(text_pose, "Beginning", _STATUS_TEXT) );
       marker_arr.markers.push_back( deleteMarker(_DELETE) );
       break;
     case _START_MEASUREMENT:
@@ -912,7 +913,7 @@ double rvinciDisplay::calculateDistance(geometry_msgs::Pose p1, geometry_msgs::P
 
 void rvinciDisplay::publishWrench()
 {
-  ROS_INFO_STREAM("publishWrench");
+  // ROS_INFO_STREAM("publishWrench");
   geometry_msgs::WrenchStamped wr;
   wr.header.stamp = ros::Time::now();
   wr.wrench.force.x = wr.wrench.force.y = wr.wrench.force.z = 0;
@@ -926,7 +927,7 @@ void rvinciDisplay::publishWrench()
 
 void rvinciDisplay::publishGravity()
 {
-  ROS_INFO_STREAM("publishGravity");
+  // ROS_INFO_STREAM("publishGravity");
   std_msgs::Bool gravity;
   gravity.data = true;
   for (int i=0; i<5; i++) 

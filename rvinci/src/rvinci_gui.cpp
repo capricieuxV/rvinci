@@ -5,7 +5,7 @@ namespace rvinci {
 
 void RvinciGui::initialize()
 {
-    ROS_INFO_STREAM("GUI initialize");
+    // ROS_INFO_STREAM("GUI initialize");
     Ogre::OverlayManager& overlay_manager = Ogre::OverlayManager::getSingleton();
     overlay_ = overlay_manager.create("RVinciInterface");
     overlay_->setZOrder(500);
