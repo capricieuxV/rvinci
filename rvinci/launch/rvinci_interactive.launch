@@ -1,6 +1,0 @@
-<launch>
-  <node name="basic_controls" type="basic_controls" pkg="interactive_marker_tutorials" output="screen"/>
-  <node name="rviz" pkg="rviz" type="rviz"
-         args="-d $(find rvinci)/launch/rvinci.rviz" 
-         output="screen" />
-</launch>
