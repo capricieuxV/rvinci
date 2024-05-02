@@ -733,18 +733,20 @@ void rvinciDisplay::publishMeasurementMarkers()
   distance_pose.orientation.w = 1.0;
 
   if (MTM_mm_) {  // MTM measurement
+    marker_arr.markers.push_back( makeTextMessage(text_pose, "MTM...", _STATUS_TEXT) );
     switch (measurement_status_)
     {
       case _BEGIN:
+        marker_arr.markers.push_back( makeTextMessage(text_pose, "Beginning", _STATUS_TEXT) );
         marker_arr.markers.push_back( deleteMarker(_DELETE) );
         break;
       case _START_MEASUREMENT:
-        marker_arr.markers.push_back( makeTextMessage(text_pose, "start measurement", _STATUS_TEXT) );
+        marker_arr.markers.push_back( makeTextMessage(text_pose, "Start measurement", _STATUS_TEXT) );
         marker_arr.markers.push_back( makeMarker(cursor_[marker_side_], _START_POINT) );
         measurement_start_ = cursor_[marker_side_];
         break;
       case _MOVING:
-        marker_arr.markers.push_back( makeTextMessage(text_pose, "moving", _STATUS_TEXT) );
+        marker_arr.markers.push_back( makeTextMessage(text_pose, "Moving", _STATUS_TEXT) );
         marker_arr.markers.push_back( makeTextMessage(distance_pose, 
           std::to_string(calculateDistance(measurement_start_, cursor_[marker_side_])*1.2*10)+" mm", _DISTANCE_TEXT) );
         marker_arr.markers.push_back( makeMarker(measurement_start_, _START_POINT) );
@@ -753,7 +755,7 @@ void rvinciDisplay::publishMeasurementMarkers()
         measurement_end_ = cursor_[marker_side_];
         break;
       case _END_MEASUREMENT:
-        marker_arr.markers.push_back( makeTextMessage(text_pose, "end measurement", _STATUS_TEXT) );
+        marker_arr.markers.push_back( makeTextMessage(text_pose, "End measurement", _STATUS_TEXT) );
         marker_arr.markers.push_back( makeTextMessage(distance_pose, 
           std::to_string(calculateDistance(measurement_start_, measurement_end_)*1.2*10)+" mm", _DISTANCE_TEXT) );
         marker_arr.markers.push_back( makeMarker(measurement_start_, _START_POINT) );
@@ -769,9 +771,9 @@ void rvinciDisplay::publishMeasurementMarkers()
         marker_arr.markers.push_back( deleteMarker(_DELETE) );
         break;
       case _START_MEASUREMENT:
-        ROS_INFO_STREAM("PSM start: "<<PSM_pose_start_.position.x<<" "<<PSM_pose_start_.position.y<<" "<<PSM_pose_start_.position.z);
-        ROS_INFO_STREAM("PSM end: "<<PSM_pose_end_.position.x<<" "<<PSM_pose_end_.position.y<<" "<<PSM_pose_end_.position.z);
-        ROS_INFO_STREAM(calculateDistance(PSM_pose_start_, PSM_pose_end_));
+        // ROS_INFO_STREAM("PSM start: "<<PSM_pose_start_.position.x<<" "<<PSM_pose_start_.position.y<<" "<<PSM_pose_start_.position.z);
+        // ROS_INFO_STREAM("PSM end: "<<PSM_pose_end_.position.x<<" "<<PSM_pose_end_.position.y<<" "<<PSM_pose_end_.position.z);
+        // ROS_INFO_STREAM(calculateDistance(PSM_pose_start_, PSM_pose_end_));
         marker_arr.markers.push_back( makeTextMessage(text_pose, "start measurement", _STATUS_TEXT) );
         marker_arr.markers.push_back( makeTextMessage(distance_pose, 
           std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000 )+" mm", _DISTANCE_TEXT) );
@@ -842,6 +844,7 @@ void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg)
 
 void rvinciDisplay::MTMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg, int i)
 {
+  // ROS_INFO_STREAM("actual MTM start: "<<msg->pose.position.x<<" "<<msg->pose.position.y<<" "<<msg->pose.position.z);
   //Offsets to set davinci at 0 x and y, with an x offset for each gripper.
   rvmsg_.gripper[i].pose = msg->pose;
   rvmsg_.gripper[i].pose.position.x *= -1;
@@ -950,6 +953,7 @@ void rvinciDisplay::coagCallback(const sensor_msgs::Joy::ConstPtr& msg)
 
 void rvinciDisplay::measurementCallback(const std_msgs::Bool::ConstPtr& msg) 
 {
+  ROS_INFO_STREAM("MTM measurement: "<<MTM_mm_);
   MTM_mm_ = msg->data;
 }
 
