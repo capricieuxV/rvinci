@@ -55,7 +55,6 @@
 #include <rviz/frame_manager.h>
 
 #include <rvinci_input_msg/rvinci_input.h>
-#include "rvinci/rvinci_gui.h"
 
 #include <interactive_markers/interactive_marker_server.h>
 

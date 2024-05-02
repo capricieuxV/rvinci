@@ -62,7 +62,7 @@
 #include <tf/transform_datatypes.h>
 
 #include <interaction_cursor_msgs/InteractionCursorUpdate.h>
-#include "interaction_cursor_rviz/interaction_cursor.h"
+#include <interaction_cursor_rviz/interaction_cursor.h>
 #include <rvinci_input_msg/rvinci_input.h>
 #include <std_msgs/String.h>
 #include "rvinci/rvinci_display.h"
