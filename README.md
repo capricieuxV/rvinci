@@ -18,7 +18,7 @@ cd src
 Then, clone the repository into the source folder:
 
 ```bash
-git clone --recursive https://github.com/ylz15/rvinci.git
+git clone --recursive git@github.com:capricieuxV/rvinci.git
 ```
 
 Eventually, build the packages:
