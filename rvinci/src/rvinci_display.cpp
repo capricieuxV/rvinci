@@ -190,13 +190,13 @@ void rvinciDisplay::update(float wall_dt, float ros_dt)
   rvmsg_.header.stamp = ros::Time::now();
   publisher_rvinci_.publish(rvmsg_);
 
-  // switch (measurement_status_MTM)
-  // {
-  //   case _BEGIN: ROS_INFO_STREAM("measurement status: _BEGIN"); break;
-  //   case _START_MEASUREMENT: ROS_INFO_STREAM("measurement status: _START_MEASUREMENT"); break;
-  //   case _MOVING: ROS_INFO_STREAM("measurement status: _MOVING"); break;
-  //   case _END_MEASUREMENT: ROS_INFO_STREAM("measurement status: _END_MEASUREMENT"); break;
-  // }
+  switch (measurement_status_MTM)
+  {
+    case _BEGIN: ROS_INFO_STREAM("measurement status: _BEGIN"); break;
+    case _START_MEASUREMENT: ROS_INFO_STREAM("measurement status: _START_MEASUREMENT"); break;
+    case _MOVING: ROS_INFO_STREAM("measurement status: _MOVING"); break;
+    case _END_MEASUREMENT: ROS_INFO_STREAM("measurement status: _END_MEASUREMENT"); break;
+  }
 
   publishMeasurementMarkers();
 
