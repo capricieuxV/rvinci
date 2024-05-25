@@ -186,6 +186,7 @@ private:
   void MTMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg, int i);
   void PSMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg, int i);
   void gripCallback(const std_msgs::Bool::ConstPtr& grab, int i);
+
   void coagCallback(const sensor_msgs::Joy::ConstPtr& msg);
   void measurementCallback(const std_msgs::Bool::ConstPtr& msg);
   void cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr& msg);
