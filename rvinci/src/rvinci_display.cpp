@@ -190,13 +190,13 @@ void rvinciDisplay::update(float wall_dt, float ros_dt)
   rvmsg_.header.stamp = ros::Time::now();
   publisher_rvinci_.publish(rvmsg_);
 
-  // switch (measurement_status_MTM)
-  // {
-  //   case _BEGIN: ROS_INFO_STREAM("measurement status: _BEGIN"); break;
-  //   case _START_MEASUREMENT: ROS_INFO_STREAM("measurement status: _START_MEASUREMENT"); break;
-  //   case _MOVING: ROS_INFO_STREAM("measurement status: _MOVING"); break;
-  //   case _END_MEASUREMENT: ROS_INFO_STREAM("measurement status: _END_MEASUREMENT"); break;
-  // }
+  switch (measurement_status_MTM)
+  {
+    case _BEGIN: ROS_INFO_STREAM("measurement status: _BEGIN"); break;
+    case _START_MEASUREMENT: ROS_INFO_STREAM("measurement status: _START_MEASUREMENT"); break;
+    case _MOVING: ROS_INFO_STREAM("measurement status: _MOVING"); break;
+    case _END_MEASUREMENT: ROS_INFO_STREAM("measurement status: _END_MEASUREMENT"); break;
+  }
 
   publishMeasurementMarkers();
 
@@ -226,7 +226,7 @@ void rvinciDisplay::pubsubSetup()
   subscriber_lcam_ = nh_.subscribe<sensor_msgs::Image>( "/jhu_daVinci/stereo_processed/left/image", 10, boost::bind(&rvinciDisplay::leftCallback,this,_1));
   subscriber_rcam_ = nh_.subscribe<sensor_msgs::Image>( "/jhu_daVinci/stereo_processed/right/image", 10, boost::bind(&rvinciDisplay::rightCallback,this,_1));
   subscriber_clutch_ = nh_.subscribe<sensor_msgs::Joy>( "/footpedals/clutch", 10, boost::bind(&rvinciDisplay::clutchCallback,this,_1));
-  // subscriber_camera_ = nh_.subscribe<sensor_msgs::Joy>( "/footpedals/camera", 10, boost::bind(&rvinciDisplay::cameraCallback,this,_1));
+  subscriber_camera_ = nh_.subscribe<sensor_msgs::Joy>( "/footpedals/camera", 10, boost::bind(&rvinciDisplay::cameraCallback,this,_1));
   subscriber_coag_ = nh_.subscribe<sensor_msgs::Joy>( "/footpedals/coag", 10, boost::bind(&rvinciDisplay::coagCallback,this,_1));
   subscriber_lgrip_ = nh_.subscribe<std_msgs::Bool>("/MTML/gripper/closed",10,boost::bind(&rvinciDisplay::gripCallback,this,_1,_LEFT));
   subscriber_rgrip_ = nh_.subscribe<std_msgs::Bool>("/MTMR/gripper/closed",10,boost::bind(&rvinciDisplay::gripCallback,this,_1,_RIGHT));
@@ -706,16 +706,16 @@ void rvinciDisplay::publishMeasurementMarkers()
   if(isMTM(left_grab_, right_grab_, coag_mode_))
   {
     MTM_mm_ = true;
-    ROS_INFO_STREAM("1 ----------> _BEGIN");
+    // ROS_INFO_STREAM("1 ----------> _BEGIN");
   }
   else
   {
-    ROS_INFO_STREAM("####################");
+    // ROS_INFO_STREAM("####################");
     MTM_mm_ = false;
   }
 
   if (MTM_mm_) {  // MTM measurement
-    // ROS_INFO_STREAM("\n************** MTM measurement **************\n");
+    ROS_INFO_STREAM("\n************** MTM measurement **************\n");
     marker_arr.markers.push_back( makeTextMessage(text_pose, "MTM...", _STATUS_TEXT) );
     switch (measurement_status_MTM)
     {
