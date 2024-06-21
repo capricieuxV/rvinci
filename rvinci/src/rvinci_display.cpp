@@ -26,45 +26,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <string>
-#include <iostream>
-#include <cmath>
-#include <string>
-
-#include <QWidget>
-#include <QDesktopWidget>
-#include <QApplication>
-
-#include <boost/bind.hpp>
-
-#include <OGRE/OgreRoot.h>
-#include <OGRE/OgreSceneNode.h>
-#include <OGRE/OgreRenderWindow.h>
-
-#include <ros/package.h>
-#include <ros/console.h>
-
-#include <rviz/properties/bool_property.h>
-#include <rviz/properties/status_property.h>
-#include <rviz/properties/float_property.h>
-#include <rviz/properties/string_property.h>
-#include <rviz/properties/tf_frame_property.h>
-#include <rviz/properties/vector_property.h>
-#include <rviz/properties/quaternion_property.h>
-#include <rviz/properties/ros_topic_property.h>
-#include <rviz/window_manager_interface.h>
-#include <rviz/view_manager.h>
-#include <rviz/render_panel.h>
-#include <rviz/display_context.h>
-#include <rviz/ogre_helpers/render_widget.h>
-#include <rviz/ogre_helpers/render_system.h>
-#include <rviz/frame_manager.h>
-#include <tf/transform_datatypes.h>
-
-#include <interaction_cursor_msgs/InteractionCursorUpdate.h>
-#include <interaction_cursor_rviz/interaction_cursor.h>
-#include <rvinci_input_msg/rvinci_input.h>
-#include <std_msgs/String.h>
 #include "rvinci/rvinci_display.h"
 
 #define _LEFT 0
@@ -119,9 +80,8 @@ rvinciDisplay::rvinciDisplay()
   material_[1].setNull();
   texture_[0].setNull();
   texture_[1].setNull();
-
-  
 }
+
 rvinciDisplay::~rvinciDisplay()
 {
   window_->removeViewport(0);
@@ -194,9 +154,12 @@ void rvinciDisplay::onInitialize()
   gravity_published_ = false;
   wrench_published_ = false;
   MTM_mm_ = false;
+  left_grab_ = false;
+  right_grab_ = false;
+  Mono_mode_ = false;
   coag_init_ = true;
 
-  measurement_status_ = _BEGIN;
+  measurement_status_MTM = _BEGIN;
   measurement_status_PSM_ = _BEGIN;
 
   input_pos_[_LEFT].x = input_pos_[_LEFT].y = input_pos_[_LEFT].z = 0;
@@ -227,13 +190,13 @@ void rvinciDisplay::update(float wall_dt, float ros_dt)
   rvmsg_.header.stamp = ros::Time::now();
   publisher_rvinci_.publish(rvmsg_);
 
-  // switch (measurement_status_)
-  // {
-  //   case _BEGIN: ROS_INFO_STREAM("measurement status: _BEGIN"); break;
-  //   case _START_MEASUREMENT: ROS_INFO_STREAM("measurement status: _START_MEASUREMENT"); break;
-  //   case _MOVING: ROS_INFO_STREAM("measurement status: _MOVING"); break;
-  //   case _END_MEASUREMENT: ROS_INFO_STREAM("measurement status: _END_MEASUREMENT"); break;
-  // }
+  switch (measurement_status_MTM)
+  {
+    case _BEGIN: ROS_INFO_STREAM("measurement status: _BEGIN"); break;
+    case _START_MEASUREMENT: ROS_INFO_STREAM("measurement status: _START_MEASUREMENT"); break;
+    case _MOVING: ROS_INFO_STREAM("measurement status: _MOVING"); break;
+    case _END_MEASUREMENT: ROS_INFO_STREAM("measurement status: _END_MEASUREMENT"); break;
+  }
 
   publishMeasurementMarkers();
 
@@ -273,7 +236,7 @@ void rvinciDisplay::pubsubSetup()
   subscriber_MTMR_ = nh_.subscribe<geometry_msgs::PoseStamped>("/MTMR/measured_cp", 10, boost::bind(&rvinciDisplay::MTMCallback,this,_1, _RIGHT));
   subscriber_PSM1_ = nh_.subscribe<geometry_msgs::PoseStamped>("/PSM1/measured_cp", 10, boost::bind(&rvinciDisplay::PSMCallback,this,_1, _RIGHT));
   subscriber_PSM2_ = nh_.subscribe<geometry_msgs::PoseStamped>("/PSM2/measured_cp", 10, boost::bind(&rvinciDisplay::PSMCallback,this,_1, _LEFT));
-  subscriber_mm_ = nh_.subscribe<std_msgs::Bool>("/rvinci_measurement_MTM", 10, boost::bind(&rvinciDisplay::measurementCallback,this,_1));
+  // subscriber_mm_ = nh_.subscribe<std_msgs::Bool>("/rvinci_measurement_MTM", 10, boost::bind(&rvinciDisplay::measurementCallback,this,_1));
   subscriber_camera_info_ = nh_.subscribe<sensor_msgs::CameraInfo>("/jhu_daVinci/stereo_processed/right/camera_info", 10, boost::bind(&rvinciDisplay::cameraInfoCallback,this,_1));
 
   publisher_rhcursor_ = nh_.advertise<interaction_cursor_msgs::InteractionCursorUpdate>("rvinci_cursor_right/update",10);
@@ -720,6 +683,14 @@ visualization_msgs::Marker rvinciDisplay::deleteMarker(int id)
   return marker;
 }
 
+bool rvinciDisplay::isMTM(bool left_grab, bool right_grab, bool coag_mode){
+  if (left_grab && right_grab && !coag_mode)
+  {
+    return true;
+  }
+  return false;
+}
+
 void rvinciDisplay::publishMeasurementMarkers()
 {
   visualization_msgs::MarkerArray marker_arr;
@@ -732,9 +703,21 @@ void rvinciDisplay::publishMeasurementMarkers()
   distance_pose.orientation.x = distance_pose.orientation.y = distance_pose.orientation.z = 0.0;
   distance_pose.orientation.w = 1.0;
 
+  if(isMTM(left_grab_, right_grab_, coag_mode_))
+  {
+    MTM_mm_ = true;
+    // ROS_INFO_STREAM("1 ----------> _BEGIN");
+  }
+  else
+  {
+    // ROS_INFO_STREAM("####################");
+    MTM_mm_ = false;
+  }
+
   if (MTM_mm_) {  // MTM measurement
+    ROS_INFO_STREAM("\n************** MTM measurement **************\n");
     marker_arr.markers.push_back( makeTextMessage(text_pose, "MTM...", _STATUS_TEXT) );
-    switch (measurement_status_)
+    switch (measurement_status_MTM)
     {
       case _BEGIN:
         marker_arr.markers.push_back( makeTextMessage(text_pose, "Beginning", _STATUS_TEXT) );
@@ -764,7 +747,10 @@ void rvinciDisplay::publishMeasurementMarkers()
         break;
     }
   } 
+  // TODO: PSM measurement
+  // To measure PSM, both left and right grippers should be closed and footpedal should be pressed
   else {  // PSM measurement
+    // ROS_INFO_STREAM("\n************** PSM measurement **************\n");
     switch(measurement_status_PSM_)
     {
       case _BEGIN:
@@ -810,25 +796,25 @@ void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg)
   // MTM measurement - if camera quick tapped while one gripper closed, begin measurement
   if (camera_quick_tap_ && !rvmsg_.gripper[marker_side_].grab)
   {
-    switch (measurement_status_)
+    switch (measurement_status_MTM)
     {
       case _BEGIN: 
-        measurement_status_ = _START_MEASUREMENT; 
+        measurement_status_MTM = _START_MEASUREMENT; 
         break;
       case _START_MEASUREMENT: 
-        measurement_status_ = _MOVING; 
+        measurement_status_MTM = _MOVING; 
         break;
       case _MOVING: 
-        measurement_status_ = _END_MEASUREMENT; 
+        measurement_status_MTM = _END_MEASUREMENT; 
         break;
       case _END_MEASUREMENT: 
-        measurement_status_ = _BEGIN; 
+        measurement_status_MTM = _BEGIN; 
         break;
     }
   }
-  else if (camera_quick_tap_ && measurement_status_ == _END_MEASUREMENT)
+  else if (camera_quick_tap_ && measurement_status_MTM == _END_MEASUREMENT)
   {
-    measurement_status_ = _BEGIN; 
+    measurement_status_MTM = _BEGIN; 
   }
 
   // PSM measurement - if camera quick tapped while left & right gripper closed, end measurement
@@ -844,7 +830,6 @@ void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg)
 
 void rvinciDisplay::MTMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg, int i)
 {
-  // ROS_INFO_STREAM("actual MTM start: "<<msg->pose.position.x<<" "<<msg->pose.position.y<<" "<<msg->pose.position.z);
   //Offsets to set davinci at 0 x and y, with an x offset for each gripper.
   rvmsg_.gripper[i].pose = msg->pose;
   rvmsg_.gripper[i].pose.position.x *= -1;
@@ -901,20 +886,39 @@ void rvinciDisplay::PSMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg,
   // ROS_INFO_STREAM("PSM end: "<<PSM_pose_end_.position.x<<" "<<PSM_pose_end_.position.y<<" "<<PSM_pose_end_.position.z);
 }
 
-void rvinciDisplay::gripCallback(const std_msgs::Bool::ConstPtr& grab, int i)
+void rvinciDisplay::gripCallback(const std_msgs::Bool::ConstPtr& msg, int i)
 {
   // MTM measurement
-  if (!rvmsg_.gripper[i].grab && grab->data && marker_side_ == i && measurement_status_ != _END_MEASUREMENT)
+  bool is_released = msg->data; // 0 - released, 1 - grabbed
+
+  if (!rvmsg_.gripper[i].grab && is_released && marker_side_ == i && measurement_status_MTM != _END_MEASUREMENT)
   {
-    measurement_status_ = _BEGIN;  //if gripper released during measurement, status back to BEGIN
+    measurement_status_MTM = _BEGIN;  //if gripper released during measurement, status back to BEGIN
+    if(i == _LEFT)
+    {
+      left_grab_ = false;
+    }
+    else
+    {
+      right_grab_ = false;
+    }
   }
-  if (!grab->data && measurement_status_ == _BEGIN) 
+
+  if (!is_released && measurement_status_MTM == _BEGIN) 
   {
     marker_side_ = i;  //gripper closed from another arm shouldnt interrupt the measurement process
+    if(i == _LEFT)
+    {
+      left_grab_ = true;
+    }
+    else
+    {
+      right_grab_ = true;
+    }
   }
 
   // PSM measurement
-  start_measurement_PSM_[i] = !grab->data;
+  start_measurement_PSM_[i] = !is_released;
   if (start_measurement_PSM_[_LEFT] && start_measurement_PSM_[_RIGHT] && measurement_status_PSM_ == _BEGIN)
   {
     measurement_status_PSM_ = _START_MEASUREMENT;
@@ -924,9 +928,9 @@ void rvinciDisplay::gripCallback(const std_msgs::Bool::ConstPtr& grab, int i)
     measurement_status_PSM_ = _BEGIN;
   }
 
-  //if "pinched" -> false, if released -> true
-  rvmsg_.gripper[i].grab = grab->data;
+  rvmsg_.gripper[i].grab = is_released;
 }
+
 
 void rvinciDisplay::coagCallback(const sensor_msgs::Joy::ConstPtr& msg)
 {
@@ -940,8 +944,12 @@ void rvinciDisplay::coagCallback(const sensor_msgs::Joy::ConstPtr& msg)
   if (coag_mode_ == 1) {
     cursor_[_LEFT].position.x -= 10;
     cursor_[_RIGHT].position.x -= 10;
+
+    // in Mono mode
+    Mono_mode_ = true;
   }
   else if (coag_mode_ == 0){
+    Mono_mode_ = false;
     int grab[2];
     cursor_[_LEFT].position.x += 10;
     cursor_[_RIGHT].position.x += 10;
@@ -951,11 +959,11 @@ void rvinciDisplay::coagCallback(const sensor_msgs::Joy::ConstPtr& msg)
   }
 }
 
-void rvinciDisplay::measurementCallback(const std_msgs::Bool::ConstPtr& msg) 
-{
-  ROS_INFO_STREAM("MTM measurement: "<<MTM_mm_);
-  MTM_mm_ = msg->data;
-}
+// void rvinciDisplay::measurementCallback(const std_msgs::Bool::ConstPtr& msg) 
+// {
+//   ROS_INFO_STREAM("MTM measurement: "<< msg->data);
+//   MTM_mm_ = msg->data;
+// }
 
 void rvinciDisplay::cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr& msg)
 {
