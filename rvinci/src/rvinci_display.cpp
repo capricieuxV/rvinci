@@ -39,7 +39,7 @@ rvinciDisplay::rvinciDisplay()
   , camera_node_(0)
   , window_(0)
   , window_R_(0)
-  , camera_offset_(0.0,-3.0,1.5) //********************//
+  , camera_offset_(0.0,-3.0,1.5)
 {
   std::string rviz_path = ros::package::getPath(ROS_PACKAGE_NAME);
   Ogre::ResourceGroupManager::getSingleton().addResourceLocation( rviz_path + "/ogre_media", "FileSystem", ROS_PACKAGE_NAME );
