@@ -63,11 +63,11 @@ class DaVinciHandEyeCalibration:
         if self.left_image is not None and self.right_image is not None:
             psm_position = self.psm.measured_cp()
             mtm_position = self.mtm.measured_cp()
-            rospy.loginfo("Capturing stereo data point... PSM Position: {}, MTM Position: {}".format(psm_position, mtm_position))
+            print("Capturing stereo data point... PSM Position: {}, MTM Position: {}".format(psm_position, mtm_position))
 
             # Store the captured data
             self.calibration_data.append((psm_position, mtm_position, self.left_image.copy(), self.right_image.copy()))
-            rospy.loginfo("Captured stereo data point.")
+            print("Captured stereo data point.")
 
     def move_psm_to_position(self, position):
         # Move PSM to a specified position in joint space
@@ -107,13 +107,13 @@ class DaVinciHandEyeCalibration:
     def save_calibration_data(self):
         # Save the captured calibration data for analysis
         np.save('calibration_data.npy', self.calibration_data)
-        rospy.loginfo("Calibration data saved.")
+        print("Calibration data saved.")
 
     def shutdown(self):
         # Shutdown the CRTK and dVRK interfaces
         self.ral_psm.shutdown()
         self.ral_mtm.shutdown()
-        rospy.loginfo("Shutting down calibration process.")
+        print("Shutting down calibration process.")
         cv2.destroyAllWindows()  # Close OpenCV windows
 
 if __name__ == '__main__':
