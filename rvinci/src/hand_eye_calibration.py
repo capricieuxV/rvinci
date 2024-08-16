@@ -10,8 +10,13 @@ from cv_bridge import CvBridge
 class DaVinciHandEyeCalibration:
     def __init__(self):
 
-        self.mtm = dvrk.mtm('MTM')
-        self.psm = dvrk.psm('PSM')
+        # Initialize CRTK and dVRK interfaces for PSM1
+        self.ral_psm = crtk.ral('PSM2')
+        self.psm = dvrk.arm(self.ral_psm)
+        
+        # Initialize CRTK and dVRK interfaces for MTM1
+        self.ral_mtm = crtk.ral('MTMR')
+        self.mtm = dvrk.arm(self.ral_mtm)
 
         # Initialize image subscribers for stereo endoscope camera
         self.bridge = CvBridge()
