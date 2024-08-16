@@ -1,6 +1,6 @@
 import crtk, dvrk
-ral = crtk.ral('PSM1')
-p = dvrk.psm(ral)
+ral = crtk.ral('test_PSM1')
+p = dvrk.arm(ral, 'PSM1')
 ral.check_connections()
 ral.spin()
 p.enable()
