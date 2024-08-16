@@ -8,8 +8,6 @@ first_entry = calibration_data[0]
 
 psm_position = first_entry[0]  # PSM position (PyKDL.Frame object)
 mtm_position = first_entry[1]  # MTM position (PyKDL.Frame object)
-left_image = first_entry[2]    # Left endoscope image (OpenCV image)
-right_image = first_entry[3]   # Right endoscope image (OpenCV image)
 
 print("PSM Position:", psm_position)
 print("MTM Position:", mtm_position)
