@@ -11,12 +11,12 @@ class DaVinciHandEyeCalibration:
     def __init__(self):
 
         # Initialize CRTK and dVRK interfaces for PSM1
-        self.ral_psm = crtk.ral('run_PSM1')
-        self.psm = dvrk.arm(self.ral_psm, 'PSM1')
+        self.ral_psm = crtk.ral('run_PSM2')
+        self.psm = dvrk.arm(self.ral_psm, 'PSM2')
         
         # Initialize CRTK and dVRK interfaces for MTM1
-        self.ral_mtm = crtk.ral('run_MTML')
-        self.mtm = dvrk.arm(self.ral_mtm, 'MTML')
+        self.ral_mtm = crtk.ral('run_MTMR')
+        self.mtm = dvrk.arm(self.ral_mtm, 'MTMR')
 
         # Initialize image subscribers for stereo endoscope camera
         self.bridge = CvBridge()
