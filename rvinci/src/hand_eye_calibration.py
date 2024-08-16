@@ -9,7 +9,6 @@ from cv_bridge import CvBridge
 
 class DaVinciHandEyeCalibration:
     def __init__(self):
-
         # Initialize CRTK and dVRK interfaces for PSM1
         self.ral_psm = crtk.ral('hand_eye_calibration')
         self.psm = dvrk.arm(self.ral_psm, 'PSM2')
@@ -41,20 +40,30 @@ class DaVinciHandEyeCalibration:
     def left_image_callback(self, msg):
         # Convert ROS image message to OpenCV format for left camera
         self.left_image = self.ros_to_cv2_image(msg)
+        self.show_images()
 
     def right_image_callback(self, msg):
         # Convert ROS image message to OpenCV format for right camera
         self.right_image = self.ros_to_cv2_image(msg)
+        self.show_images()
 
     def ros_to_cv2_image(self, msg):
         # Convert ROS Image message to OpenCV image
         return cv2.cvtColor(self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8'), cv2.COLOR_BGR2RGB)
+
+    def show_images(self):
+        # Display the stereo images side by side
+        if self.left_image is not None and self.right_image is not None:
+            combined_image = np.hstack((self.left_image, self.right_image))
+            cv2.imshow('Stereo Endoscope Images', combined_image)
+            cv2.waitKey(1)  # Update the display window
 
     def capture_data(self):
         # Capture PSM and MTM data along with the stereo endoscope images
         if self.left_image is not None and self.right_image is not None:
             psm_position = self.psm.measured_cp()
             mtm_position = self.mtm.measured_cp()
+            rospy.loginfo("Capturing stereo data point... PSM Position: {}, MTM Position: {}".format(psm_position, mtm_position))
 
             # Store the captured data
             self.calibration_data.append((psm_position, mtm_position, self.left_image.copy(), self.right_image.copy()))
@@ -105,6 +114,7 @@ class DaVinciHandEyeCalibration:
         self.ral_psm.shutdown()
         self.ral_mtm.shutdown()
         rospy.loginfo("Shutting down calibration process.")
+        cv2.destroyAllWindows()  # Close OpenCV windows
 
 if __name__ == '__main__':
     calibration = DaVinciHandEyeCalibration()
