@@ -58,6 +58,7 @@ if __name__ == "__main__":
     # Generate two sets of 3D points for demonstration
     set_A = np.random.rand(10, 3)  # Replace with your actual data
     set_B = np.random.rand(10, 3)  # Replace with your actual data
+    print(set_A.shape, "\n", set_B.shape)
 
     # Apply Horn's method to align set_A with set_B
     [R, P, Q, Q_inv] = horn_trans(set_A, set_B)
