@@ -9,16 +9,12 @@ from cv_bridge import CvBridge
 
 class DaVinciHandEyeCalibration:
     def __init__(self):
-        # Initialize ROS node
-        # rospy.init_node('davinci_handeye_calibration', anonymous=True)
 
         # Initialize CRTK and dVRK interfaces for PSM1
-        self.ral_psm = crtk.ral('PSM2')
-        self.psm = dvrk.arm(self.ral_psm)
+        self.psm = dvrk.arm(crtk.ral('PSM2'))
         
         # Initialize CRTK and dVRK interfaces for MTM1
-        self.ral_mtm = crtk.ral('MTMR')
-        self.mtm = dvrk.arm(self.ral_mtm)
+        self.mtm = dvrk.arm(crtk.ral('MTMR'))
 
         # Initialize image subscribers for stereo endoscope camera
         self.bridge = CvBridge()
