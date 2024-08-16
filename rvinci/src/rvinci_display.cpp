@@ -190,14 +190,6 @@ void rvinciDisplay::update(float wall_dt, float ros_dt)
   rvmsg_.header.stamp = ros::Time::now();
   publisher_rvinci_.publish(rvmsg_);
 
-  switch (measurement_status_MTM)
-  {
-    case _BEGIN: ROS_INFO_STREAM("measurement status: _BEGIN"); break;
-    case _START_MEASUREMENT: ROS_INFO_STREAM("measurement status: _START_MEASUREMENT"); break;
-    case _MOVING: ROS_INFO_STREAM("measurement status: _MOVING"); break;
-    case _END_MEASUREMENT: ROS_INFO_STREAM("measurement status: _END_MEASUREMENT"); break;
-  }
-
   publishMeasurementMarkers();
 
   // if (!wrench_published_) 
@@ -711,7 +703,7 @@ void rvinciDisplay::publishMeasurementMarkers()
   else
   {
     // ROS_INFO_STREAM("####################");
-    MTM_mm_ = false;
+    MTM_mm_ = false; 
   }
 
   if (MTM_mm_) {  // MTM measurement
@@ -731,16 +723,17 @@ void rvinciDisplay::publishMeasurementMarkers()
       case _MOVING:
         marker_arr.markers.push_back( makeTextMessage(text_pose, "Moving", _STATUS_TEXT) );
         marker_arr.markers.push_back( makeTextMessage(distance_pose, 
-          std::to_string(calculateDistance(measurement_start_, cursor_[marker_side_])*1.2*10)+" mm", _DISTANCE_TEXT) );
+        std::to_string(calculateDistance(measurement_start_, cursor_[marker_side_])*1.2*10)+" mm", _DISTANCE_TEXT) );
         marker_arr.markers.push_back( makeMarker(measurement_start_, _START_POINT) );
         marker_arr.markers.push_back( makeMarker(cursor_[marker_side_], _END_POINT) );
+        ROS_INFO_STREAM("marker_side: "<< marker_side_);
         marker_arr.markers.push_back( makeLineMarker(measurement_start_.position, cursor_[marker_side_].position, _LINE) );
         measurement_end_ = cursor_[marker_side_];
         break;
       case _END_MEASUREMENT:
         marker_arr.markers.push_back( makeTextMessage(text_pose, "End measurement", _STATUS_TEXT) );
         marker_arr.markers.push_back( makeTextMessage(distance_pose, 
-          std::to_string(calculateDistance(measurement_start_, measurement_end_)*1.2*10)+" mm", _DISTANCE_TEXT) );
+        std::to_string(calculateDistance(measurement_start_, measurement_end_)*1.2*10)+" mm", _DISTANCE_TEXT) );
         marker_arr.markers.push_back( makeMarker(measurement_start_, _START_POINT) );
         marker_arr.markers.push_back( makeMarker(measurement_end_, _END_POINT) );
         marker_arr.markers.push_back( makeLineMarker(measurement_start_.position, measurement_end_.position, _LINE) );
@@ -788,7 +781,7 @@ void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg)
 void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg) 
 {
   // buttons: 0 - released, 1 - pressed, 2 - quick tap
-  // rvmsg_.camera = msg->buttons[0]; 
+  rvmsg_.camera = msg->buttons[0]; 
 
   if (msg->buttons[0] == 2) camera_quick_tap_ = true;
   else camera_quick_tap_ = false;
@@ -958,12 +951,6 @@ void rvinciDisplay::coagCallback(const sensor_msgs::Joy::ConstPtr& msg)
     publishCursorUpdate(grab);
   }
 }
-
-// void rvinciDisplay::measurementCallback(const std_msgs::Bool::ConstPtr& msg) 
-// {
-//   ROS_INFO_STREAM("MTM measurement: "<< msg->data);
-//   MTM_mm_ = msg->data;
-// }
 
 void rvinciDisplay::cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr& msg)
 {
