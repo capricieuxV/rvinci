@@ -8,13 +8,14 @@ from datetime import datetime
 
 class DaVinciHandEyeCalibration:
     def __init__(self):
-        # Initialize CRTK and dVRK interfaces for PSM2
-        self.ral_psm = crtk.ral('hand_eye_calibration')
-        self.psm = dvrk.arm(self.ral_psm, 'PSM1')
         
         # Initialize CRTK and dVRK interfaces for MTMR
         self.ral_mtm = crtk.ral('hand_eye_calibration')
         self.mtm = dvrk.arm(self.ral_mtm, 'MTMR')
+
+        # Initialize CRTK and dVRK interfaces for PSM2
+        self.ral_psm = crtk.ral('hand_eye_calibration')
+        self.psm = dvrk.arm(self.ral_psm, 'PSM1')
 
         # Initialize variables to store calibration data
         self.calibration_data_psm = []
@@ -89,10 +90,10 @@ class DaVinciHandEyeCalibration:
 
         for i in range(self.n_iteration):  
             # Move PSM in Cartesian space
-            self.move_psm_in_cartesian(dx=0.01 * i, dz=0.01 * i, rotation_deg=5 * i)
+            self.move_psm_in_cartesian(dx=0.01 * i, dz=0.01 * i, rotation_deg=3 * i)
             
             # Move MTM in Cartesian space
-            self.move_mtm_in_cartesian(dx=-0.01 * i, dz=0.01 * i, rotation_deg=-5 * i)
+            self.move_mtm_in_cartesian(dx=-0.01 * i, dz=0.01 * i, rotation_deg=-3 * i)
             
             # Capture the data at this configuration
             self.capture_data()
@@ -112,7 +113,8 @@ class DaVinciHandEyeCalibration:
 
         if file_type == 'csv':
             # Save data into CSV
-            filename = f"{current_date}_cal_data.csv"
+            pair_name = 'R1' # which pair fo calibration data (eg.MTML & PSM2 is 'L2')
+            filename = f"./data/{current_date}_cal_data_{pair_name}.csv"
             with open(filename, mode='w', newline='') as file:
                 writer = csv.writer(file)
                 # header
