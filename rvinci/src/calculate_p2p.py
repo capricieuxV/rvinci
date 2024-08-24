@@ -66,9 +66,9 @@ if __name__ == "__main__":
 
     # load calibration data from csv file
     current_date = datetime.now().strftime("%m%d")
-    pair_name = 'L2' # which pair fo calibration data (eg.MTML & PSM2 is 'L2')
+    pair_name = 'R1' # which pair fo calibration data (eg.MTML & PSM2 is 'L2')
     filepath = f"./data/{current_date}_cal_data_{pair_name}.csv"
-    data = pd.read_csv("./data/0822_cal_data_L2.csv")
+    data = pd.read_csv(filepath)
 
     # initialize lists to hold data resprectively
     psm_rot = []
