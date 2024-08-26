@@ -32,8 +32,21 @@
 
 #include "rviz/display.h"
 
-#include <QObject>
+#include <string>
+#include <iostream>
+#include <cmath>
+#include <string>
+#include <std_msgs/String.h>
+
 #include <ros/ros.h>
+#include <ros/package.h>
+#include <ros/console.h>
+
+#include <QWidget>
+#include <QDesktopWidget>
+#include <QApplication>
+
+#include <QObject>
 #include <OGRE/OgreRenderTargetListener.h>
 #include <OGRE/OgrePrerequisites.h>
 #include <OgreVector3.h>
@@ -41,6 +54,33 @@
 #include <OgreQuaternion.h>
 #include <OgreRectangle2D.h>
 #include <OgreTexture.h>
+
+#include <boost/bind.hpp>
+
+#include <OGRE/OgreRoot.h>
+#include <OGRE/OgreSceneNode.h>
+#include <OGRE/OgreRenderWindow.h>
+
+#include <rviz/properties/bool_property.h>
+#include <rviz/properties/status_property.h>
+#include <rviz/properties/float_property.h>
+#include <rviz/properties/string_property.h>
+#include <rviz/properties/tf_frame_property.h>
+#include <rviz/properties/vector_property.h>
+#include <rviz/properties/quaternion_property.h>
+#include <rviz/properties/ros_topic_property.h>
+#include <rviz/window_manager_interface.h>
+#include <rviz/view_manager.h>
+#include <rviz/render_panel.h>
+#include <rviz/display_context.h>
+#include <rviz/ogre_helpers/render_widget.h>
+#include <rviz/ogre_helpers/render_system.h>
+#include <rviz/frame_manager.h>
+#include <tf/transform_datatypes.h>
+
+#include <interaction_cursor_msgs/InteractionCursorUpdate.h>
+#include <interaction_cursor_rviz/interaction_cursor.h>
+#include <rvinci_input_msg/rvinci_input.h>
 
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/Joy.h>
@@ -53,9 +93,6 @@
 #include <geometry_msgs/WrenchStamped.h>
 #include <tf/transform_listener.h>
 #include <rviz/frame_manager.h>
-
-#include <rvinci_input_msg/rvinci_input.h>
-#include "rvinci/rvinci_gui.h"
 
 #include <interactive_markers/interactive_marker_server.h>
 
@@ -85,7 +122,7 @@ class rvinciDisplay: public rviz::Display, public Ogre::RenderTargetListener
  * a da Vinci surgical console to navigate the RViz environment and manipulate
  * virtual objects within the world. It spawns a seperate window with stereo display
  * whose cameras can be controlled with the console. It also provides outputs for
- * the interaction_cursor_3D to spawn two 3D cursors. 
+ * the interaction_cursor_3D to spawn two 3D cursors. rvinciDisplay::
  */
 Q_OBJECT
 public:
@@ -149,6 +186,7 @@ private:
   void MTMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg, int i);
   void PSMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg, int i);
   void gripCallback(const std_msgs::Bool::ConstPtr& grab, int i);
+
   void coagCallback(const sensor_msgs::Joy::ConstPtr& msg);
   void measurementCallback(const std_msgs::Bool::ConstPtr& msg);
   void cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr& msg);
@@ -159,12 +197,15 @@ private:
   //publish wrench 0 and gravity compensation
   void publishGravity();
   void publishWrench();
+
   //visualization
   visualization_msgs::Marker makeMarker(geometry_msgs::Pose p, int id);
   visualization_msgs::Marker makeLineMarker(geometry_msgs::Point p1, geometry_msgs::Point p2, int id);
   visualization_msgs::Marker makeTextMessage(geometry_msgs::Pose p, std::string msg, int id);
   visualization_msgs::Marker deleteMarker(int id);
+
   //measurement
+  bool isMTM(bool left_grab, bool right_grab, bool coag_mode);
   double calculateDistance(geometry_msgs::Pose p1, geometry_msgs::Pose p2);
   void publishMeasurementMarkers();
 
@@ -179,13 +220,15 @@ private:
   bool prev_grab_[2];
   bool wrench_published_;
   bool gravity_published_;
+  bool left_grab_, right_grab_;
   bool MTM_mm_;
+  bool Mono_mode_;
   bool coag_init_;
 
   bool camera_quick_tap_;
   bool start_measurement_PSM_[2];
   int marker_side_;
-  MeasurementApp measurement_status_;
+  MeasurementApp measurement_status_MTM;
   MeasurementApp measurement_status_PSM_;
   double distance_measured_;
 
@@ -278,4 +321,3 @@ private:
 } // namespace rvinci
 
 #endif
-
