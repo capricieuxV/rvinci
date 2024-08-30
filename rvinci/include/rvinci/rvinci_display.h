@@ -321,4 +321,3 @@ private:
 } // namespace rvinci
 
 #endif
-

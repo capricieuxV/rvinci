@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+=======
+## test PSM2 
+
+>>>>>>> master
 import crtk, dvrk
 ral = crtk.ral('test_PSM2')
 p = dvrk.arm(ral, 'PSM2')
@@ -32,4 +37,8 @@ goal = p.setpoint_cp()
 goal.M.DoRotX(math.pi * 0.25)
 p.move_cp(goal).wait()
 
+<<<<<<< HEAD
 ral.shutdown()
+=======
+ral.shutdown()
+>>>>>>> master
