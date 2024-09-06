@@ -84,6 +84,6 @@ Save results:
 - Commit button to save (note camera_info_url should be correct)
 
 ## Untar calibration.tar file and there will be 'left.yaml' and 'right.yaml'
-## Move the two .yaml files to /home/jwang429/catkin_ws/src/cisst-saw/sawIntuitiveResearchKit/share/jhu-daVinci
+## Move the two .yaml files to /home/<user>/catkin_ws/src/cisst-saw/sawIntuitiveResearchKit/share/jhu-daVinci
 
 
