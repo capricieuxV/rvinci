@@ -1,8 +1,5 @@
-<<<<<<< HEAD
-=======
 ## test PSM2 
 
->>>>>>> master
 import crtk, dvrk
 ral = crtk.ral('test_PSM2')
 p = dvrk.arm(ral, 'PSM2')
@@ -15,7 +12,7 @@ p.home()
 [position, velocity, effort, time] = p.measured_js()
 # get only position
 position = p.measured_jp()
-# get position and time
+# get position and timez
 [position, time] = p.measured_jp(extra = True)
 
 # move in joint space
@@ -37,8 +34,4 @@ goal = p.setpoint_cp()
 goal.M.DoRotX(math.pi * 0.25)
 p.move_cp(goal).wait()
 
-<<<<<<< HEAD
 ral.shutdown()
-=======
-ral.shutdown()
->>>>>>> master
