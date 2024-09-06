@@ -723,7 +723,7 @@ void rvinciDisplay::publishMeasurementMarkers()
       case _MOVING:
         marker_arr.markers.push_back( makeTextMessage(text_pose, "Moving", _STATUS_TEXT) );
         marker_arr.markers.push_back( makeTextMessage(distance_pose, 
-        std::to_string(calculateDistance(measurement_start_, cursor_[marker_side_])*1.2*10)+" mm", _DISTANCE_TEXT) );
+        std::to_string(calculateDistance(measurement_start_, cursor_[marker_side_])*10)+" mm", _DISTANCE_TEXT) );
         marker_arr.markers.push_back( makeMarker(measurement_start_, _START_POINT) );
         marker_arr.markers.push_back( makeMarker(cursor_[marker_side_], _END_POINT) );
         ROS_INFO_STREAM("marker_side: "<< marker_side_);
@@ -733,7 +733,7 @@ void rvinciDisplay::publishMeasurementMarkers()
       case _END_MEASUREMENT:
         marker_arr.markers.push_back( makeTextMessage(text_pose, "End measurement", _STATUS_TEXT) );
         marker_arr.markers.push_back( makeTextMessage(distance_pose, 
-        std::to_string(calculateDistance(measurement_start_, measurement_end_)*1.2*10)+" mm", _DISTANCE_TEXT) );
+        std::to_string(calculateDistance(measurement_start_, measurement_end_)*10)+" mm", _DISTANCE_TEXT) );
         marker_arr.markers.push_back( makeMarker(measurement_start_, _START_POINT) );
         marker_arr.markers.push_back( makeMarker(measurement_end_, _END_POINT) );
         marker_arr.markers.push_back( makeLineMarker(measurement_start_.position, measurement_end_.position, _LINE) );
@@ -750,17 +750,17 @@ void rvinciDisplay::publishMeasurementMarkers()
         marker_arr.markers.push_back( deleteMarker(_DELETE) );
         break;
       case _START_MEASUREMENT:
-        // ROS_INFO_STREAM("PSM start: "<<PSM_pose_start_.position.x<<" "<<PSM_pose_start_.position.y<<" "<<PSM_pose_start_.position.z);
-        // ROS_INFO_STREAM("PSM end: "<<PSM_pose_end_.position.x<<" "<<PSM_pose_end_.position.y<<" "<<PSM_pose_end_.position.z);
-        // ROS_INFO_STREAM(calculateDistance(PSM_pose_start_, PSM_pose_end_));
+        ROS_INFO_STREAM("PSM start: "<<PSM_pose_start_.position.x<<" "<<PSM_pose_start_.position.y<<" "<<PSM_pose_start_.position.z);
+        ROS_INFO_STREAM("PSM end: "<<PSM_pose_end_.position.x<<" "<<PSM_pose_end_.position.y<<" "<<PSM_pose_end_.position.z);
+        ROS_INFO_STREAM(calculateDistance(PSM_pose_start_, PSM_pose_end_));
         marker_arr.markers.push_back( makeTextMessage(text_pose, "start measurement", _STATUS_TEXT) );
         marker_arr.markers.push_back( makeTextMessage(distance_pose, 
-          std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000 )+" mm", _DISTANCE_TEXT) );
+          std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000)+" mm", _DISTANCE_TEXT) );
         break;
       case _END_MEASUREMENT:
         marker_arr.markers.push_back( makeTextMessage(text_pose, "end measurement", _STATUS_TEXT) );
         marker_arr.markers.push_back( makeTextMessage(distance_pose, 
-          std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000 )+" mm", _DISTANCE_TEXT) );
+          std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000)+" mm", _DISTANCE_TEXT) );
         break;
     }
   }
@@ -839,9 +839,13 @@ void rvinciDisplay::PSMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg,
     {
       case _LEFT: 
         PSM_pose_start_ = msg->pose;
+        PSM_pose_start_.position.x -= 0.000154096;
+        PSM_pose_start_.position.y -= 0.000118207;
         break;
       case _RIGHT: 
         PSM_pose_end_ = msg->pose;
+        PSM_pose_end_.position.x -= 0.000154096;
+        PSM_pose_end_.position.y -= 0.000118207;
         break;
     }
   }
