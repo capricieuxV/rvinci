@@ -312,7 +312,7 @@ private:
   geometry_msgs::Pose measurement_end_;
   geometry_msgs::Pose PSM_pose_start_;
   geometry_msgs::Pose PSM_pose_end_;
-  geometry_msgs::Pose single_psm_start_:
+  geometry_msgs::Pose single_psm_start_;
   geometry_msgs::Pose single_psm_end_;
 
   rviz::FrameManager frame_manager_;

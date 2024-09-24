@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/jwang429/catkin_ws/src/rvinci/rvinci/build/devel/setup.sh

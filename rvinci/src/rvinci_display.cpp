@@ -221,7 +221,7 @@ void rvinciDisplay::pubsubSetup()
   subscriber_rcam_ = nh_.subscribe<sensor_msgs::Image>( "/jhu_daVinci/stereo_processed/right/image", 10, boost::bind(&rvinciDisplay::rightCallback,this,_1));
   subscriber_clutch_ = nh_.subscribe<sensor_msgs::Joy>( "/footpedals/clutch", 10, boost::bind(&rvinciDisplay::clutchCallback,this,_1));
   subscriber_camera_ = nh_.subscribe<sensor_msgs::Joy>( "/footpedals/camera", 10, boost::bind(&rvinciDisplay::cameraCallback,this,_1));
-  subscriber_mono_ = nh.subscribe<sensor_msgs::Joy>("/footpedals/mono", 10, boost::bind(&rvinciDisplay::monoCallback,this,_1))
+  subscriber_mono_ = nh_.subscribe<sensor_msgs::Joy>("/footpedals/mono", 10, boost::bind(&rvinciDisplay::monoCallback,this,_1));
   subscriber_coag_ = nh_.subscribe<sensor_msgs::Joy>( "/footpedals/coag", 10, boost::bind(&rvinciDisplay::coagCallback,this,_1));
   subscriber_lgrip_ = nh_.subscribe<std_msgs::Bool>("/MTML/gripper/closed",10, boost::bind(&rvinciDisplay::gripCallback,this,_1,_LEFT));
   subscriber_rgrip_ = nh_.subscribe<std_msgs::Bool>("/MTMR/gripper/closed",10, boost::bind(&rvinciDisplay::gripCallback,this,_1,_RIGHT));
@@ -231,7 +231,7 @@ void rvinciDisplay::pubsubSetup()
   subscriber_MTMR_ = nh_.subscribe<geometry_msgs::PoseStamped>("/MTMR/measured_cp", 10, boost::bind(&rvinciDisplay::MTMCallback,this,_1, _RIGHT));
   subscriber_PSM1_ = nh_.subscribe<geometry_msgs::PoseStamped>("/PSM1/measured_cp", 10, boost::bind(&rvinciDisplay::PSMCallback,this,_1, _RIGHT));
   subscriber_PSM2_ = nh_.subscribe<geometry_msgs::PoseStamped>("/PSM2/measured_cp", 10, boost::bind(&rvinciDisplay::PSMCallback,this,_1, _LEFT));
-  subscriber_teleop_ = nh_.subscribe<std_msgs::Bool>("/dvrk/teleop/status", 10, boost::bind(&rvinciDisplay::teleopCallback, this, _1));
+  subscriber_teleop_ = nh_.subscribe<std_msgs::Bool>("/console/teleop/enabled", 10, boost::bind(&rvinciDisplay::teleopCallback, this, _1));
   // subscriber_mm_ = nh_.subscribe<std_msgs::Bool>("/rvinci_measurement_MTM", 10, boost::bind(&rvinciDisplay::measurementCallback,this,_1));
   subscriber_camera_info_ = nh_.subscribe<sensor_msgs::CameraInfo>("/jhu_daVinci/stereo_processed/right/camera_info", 10, boost::bind(&rvinciDisplay::cameraInfoCallback,this,_1));
 
@@ -461,7 +461,8 @@ int rvinciDisplay::getaGrip(bool grab, int i)
     {
     prev_grab_[i] = grab;
     return 0;//none
-   }
+    }
+  return 0;
 }
 
 void rvinciDisplay::cameraSetup()
@@ -713,7 +714,7 @@ void rvinciDisplay::publishMeasurementMarkers()
                 break;
             case _MOVING:
                 marker_arr.markers.push_back(makeTextMessage(text_pose, "moving", _STATUS_TEXT));
-                marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(single_PSM_start_, cursor_[marker_side_]) * 1000) + " mm", _DISTANCE_TEXT));
+                marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(single_psm_start_, cursor_[marker_side_]) * 1000) + " mm", _DISTANCE_TEXT));
                 marker_arr.markers.push_back(makeMarker(single_psm_start_, _START_POINT));
                 marker_arr.markers.push_back(makeMarker(cursor_[marker_side_], _END_POINT));
                 marker_arr.markers.push_back(makeLineMarker(single_psm_start_.position, cursor_[marker_side_].position, _LINE));
@@ -726,7 +727,8 @@ void rvinciDisplay::publishMeasurementMarkers()
                 marker_arr.markers.push_back(makeLineMarker(single_psm_start_.position, single_psm_end_.position, _LINE));
                 break;
             }
-        }else {
+        }
+        else {
             // Double PSM measurement mode 
             switch (measurement_status_PSM_) {
                 case _BEGIN:
@@ -904,7 +906,7 @@ void rvinciDisplay::teleopCallback(const std_msgs::Bool::ConstPtr& msg)
 
   // ROS_INFO_STREAM("PSM start: "<<PSM_pose_start_.position.x<<" "<<PSM_pose_start_.position.y<<" "<<PSM_pose_start_.position.z);
   // ROS_INFO_STREAM("PSM end: "<<PSM_pose_end_.position.x<<" "<<PSM_pose_end_.position.y<<" "<<PSM_pose_end_.position.z);
-}
+
 
 void rvinciDisplay::gripCallback(const std_msgs::Bool::ConstPtr& msg, int i)
 {
@@ -951,7 +953,7 @@ void rvinciDisplay::gripCallback(const std_msgs::Bool::ConstPtr& msg, int i)
   rvmsg_.gripper[i].grab = is_released;
 }
 
-void rvinciDisplay::monoCallback(const sensor_msgs::Joy::constPtr& msg){
+void rvinciDisplay::monoCallback(const sensor_msgs::Joy::ConstPtr& msg){
   if(single_psm_mode_){
     // momo quick tap -> set the first point
     if(msg->buttons[0] == 2 && !first_point_set_){
