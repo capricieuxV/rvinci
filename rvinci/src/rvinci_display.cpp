@@ -726,7 +726,7 @@ void rvinciDisplay::publishMeasurementMarkers()
         std::to_string(calculateDistance(measurement_start_, cursor_[marker_side_])*10)+" mm", _DISTANCE_TEXT) );
         marker_arr.markers.push_back( makeMarker(measurement_start_, _START_POINT) );
         marker_arr.markers.push_back( makeMarker(cursor_[marker_side_], _END_POINT) );
-        ROS_INFO_STREAM("marker_side: "<< marker_side_);
+        ROS_INFO_STREAM("marker_side : "<< marker_side_);
         marker_arr.markers.push_back( makeLineMarker(measurement_start_.position, cursor_[marker_side_].position, _LINE) );
         measurement_end_ = cursor_[marker_side_];
         break;
