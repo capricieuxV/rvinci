@@ -1,37 +1,32 @@
 [
 {
   "directory": "/home/jwang429/catkin_ws/src/rvinci/rvinci/build",
-  "command": "/usr/bin/c++  -DQT_NO_KEYWORDS -DROSCONSOLE_BACKEND_LOG4CXX -DROS_BUILD_SHARED_LIBS=1 -DROS_PACKAGE_NAME=\\\"rvinci\\\" -Drvinci_EXPORTS -I../include -I/home/jwang429/catkin_ws/devel/.private/rvinci_input_msg/include -I/home/jwang429/catkin_ws/devel/.private/interaction_cursor_msgs/include -I/home/jwang429/catkin_ws/src/rviz_tutorials/image_transport/include -I/home/jwang429/catkin_ws/src/rvinci/interaction_cursor_3d/interaction_cursor_rviz/include -I/opt/ros/noetic/include -I/opt/ros/noetic/share/xmlrpcpp/cmake/../../../include/xmlrpcpp -I/usr/include/eigen3 -I/usr/include/OGRE/Overlay -I/usr/include/OGRE -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++  -g -fPIC   -fPIC -o CMakeFiles/rvinci.dir/src/rvinci_display.cpp.o -c /home/jwang429/catkin_ws/src/rvinci/rvinci/src/rvinci_display.cpp",
+  "command": "/usr/bin/c++  -DQT_NO_KEYWORDS -DROSCONSOLE_BACKEND_LOG4CXX -DROS_BUILD_SHARED_LIBS=1 -DROS_PACKAGE_NAME=\\\"rvinci\\\" -Drvinci_EXPORTS -I/home/jwang429/catkin_ws/src/rvinci/rvinci/include -I/home/jwang429/catkin_ws/devel/.private/rvinci_input_msg/include -I/home/jwang429/catkin_ws/devel/.private/interaction_cursor_msgs/include -I/home/jwang429/catkin_ws/src/rviz_tutorials/image_transport/include -I/home/jwang429/catkin_ws/src/rvinci/interaction_cursor_3d/interaction_cursor_rviz/include -I/opt/ros/noetic/include -I/opt/ros/noetic/share/xmlrpcpp/cmake/../../../include/xmlrpcpp -I/usr/include/eigen3 -I/usr/include/OGRE/Overlay -I/usr/include/OGRE -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++  -g -fPIC   -fPIC -o CMakeFiles/rvinci.dir/src/rvinci_display.cpp.o -c /home/jwang429/catkin_ws/src/rvinci/rvinci/src/rvinci_display.cpp",
   "file": "/home/jwang429/catkin_ws/src/rvinci/rvinci/src/rvinci_display.cpp"
 },
-
 {
   "directory": "/home/jwang429/catkin_ws/src/rvinci/rvinci/build",
-  "command": "/usr/bin/c++  -DQT_NO_KEYWORDS -DROSCONSOLE_BACKEND_LOG4CXX -DROS_BUILD_SHARED_LIBS=1 -DROS_PACKAGE_NAME=\\\"rvinci\\\" -Drvinci_EXPORTS -I../include -I/home/jwang429/catkin_ws/devel/.private/rvinci_input_msg/include -I/home/jwang429/catkin_ws/devel/.private/interaction_cursor_msgs/include -I/home/jwang429/catkin_ws/src/rviz_tutorials/image_transport/include -I/home/jwang429/catkin_ws/src/rvinci/interaction_cursor_3d/interaction_cursor_rviz/include -I/opt/ros/noetic/include -I/opt/ros/noetic/share/xmlrpcpp/cmake/../../../include/xmlrpcpp -I/usr/include/eigen3 -I/usr/include/OGRE/Overlay -I/usr/include/OGRE -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++  -g -fPIC   -fPIC -o CMakeFiles/rvinci.dir/include/rvinci/moc_rvinci_display.cpp.o -c /home/jwang429/catkin_ws/src/rvinci/rvinci/build/include/rvinci/moc_rvinci_display.cpp",
+  "command": "/usr/bin/c++  -DQT_NO_KEYWORDS -DROSCONSOLE_BACKEND_LOG4CXX -DROS_BUILD_SHARED_LIBS=1 -DROS_PACKAGE_NAME=\\\"rvinci\\\" -Drvinci_EXPORTS -I/home/jwang429/catkin_ws/src/rvinci/rvinci/include -I/home/jwang429/catkin_ws/devel/.private/rvinci_input_msg/include -I/home/jwang429/catkin_ws/devel/.private/interaction_cursor_msgs/include -I/home/jwang429/catkin_ws/src/rviz_tutorials/image_transport/include -I/home/jwang429/catkin_ws/src/rvinci/interaction_cursor_3d/interaction_cursor_rviz/include -I/opt/ros/noetic/include -I/opt/ros/noetic/share/xmlrpcpp/cmake/../../../include/xmlrpcpp -I/usr/include/eigen3 -I/usr/include/OGRE/Overlay -I/usr/include/OGRE -I/usr/include/x86_64-linux-gnu/qt5 -I/usr/include/x86_64-linux-gnu/qt5/QtWidgets -I/usr/include/x86_64-linux-gnu/qt5/QtGui -I/usr/include/x86_64-linux-gnu/qt5/QtCore -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++  -g -fPIC   -fPIC -o CMakeFiles/rvinci.dir/include/rvinci/moc_rvinci_display.cpp.o -c /home/jwang429/catkin_ws/src/rvinci/rvinci/build/include/rvinci/moc_rvinci_display.cpp",
   "file": "/home/jwang429/catkin_ws/src/rvinci/rvinci/build/include/rvinci/moc_rvinci_display.cpp"
 },
-
 {
-  "directory": "/home/jwang429/catkin_ws/src/rvinci/rvinci/build",
-  "command": "/usr/bin/c++  -DGTEST_CREATE_SHARED_LIBRARY=1 -DQT_NO_KEYWORDS -Dgmock_main_EXPORTS -isystem /usr/src/googletest/googlemock/include -isystem /usr/src/googletest/googlemock -isystem /usr/src/googletest/googletest/include -isystem /usr/src/googletest/googletest  -g -fPIC   -fPIC -Wall -Wshadow -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -DGTEST_HAS_PTHREAD=1 -std=c++11 -o gtest/googlemock/CMakeFiles/gmock_main.dir/src/gmock_main.cc.o -c /usr/src/googletest/googlemock/src/gmock_main.cc",
+  "directory": "/home/jwang429/catkin_ws/src/rvinci/rvinci/build/gtest/googlemock",
+  "command": "/usr/bin/c++  -DGTEST_CREATE_SHARED_LIBRARY=1 -DQT_NO_KEYWORDS -Dgmock_main_EXPORTS -isystem /usr/src/googletest/googlemock/include -isystem /usr/src/googletest/googlemock -isystem /usr/src/googletest/googletest/include -isystem /usr/src/googletest/googletest  -g -fPIC   -fPIC -Wall -Wshadow -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -DGTEST_HAS_PTHREAD=1 -std=c++11 -o CMakeFiles/gmock_main.dir/src/gmock_main.cc.o -c /usr/src/googletest/googlemock/src/gmock_main.cc",
   "file": "/usr/src/googletest/googlemock/src/gmock_main.cc"
 },
-
 {
-  "directory": "/home/jwang429/catkin_ws/src/rvinci/rvinci/build",
-  "command": "/usr/bin/c++  -DGTEST_CREATE_SHARED_LIBRARY=1 -DQT_NO_KEYWORDS -Dgmock_EXPORTS -I/usr/src/googletest/googlemock/include -I/usr/src/googletest/googlemock -isystem /usr/src/googletest/googletest/include -isystem /usr/src/googletest/googletest  -g -fPIC   -fPIC -Wall -Wshadow -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -DGTEST_HAS_PTHREAD=1 -std=c++11 -o gtest/googlemock/CMakeFiles/gmock.dir/src/gmock-all.cc.o -c /usr/src/googletest/googlemock/src/gmock-all.cc",
+  "directory": "/home/jwang429/catkin_ws/src/rvinci/rvinci/build/gtest/googlemock",
+  "command": "/usr/bin/c++  -DGTEST_CREATE_SHARED_LIBRARY=1 -DQT_NO_KEYWORDS -Dgmock_EXPORTS -I/usr/src/googletest/googlemock/include -I/usr/src/googletest/googlemock -isystem /usr/src/googletest/googletest/include -isystem /usr/src/googletest/googletest  -g -fPIC   -fPIC -Wall -Wshadow -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -DGTEST_HAS_PTHREAD=1 -std=c++11 -o CMakeFiles/gmock.dir/src/gmock-all.cc.o -c /usr/src/googletest/googlemock/src/gmock-all.cc",
   "file": "/usr/src/googletest/googlemock/src/gmock-all.cc"
 },
-
 {
-  "directory": "/home/jwang429/catkin_ws/src/rvinci/rvinci/build",
-  "command": "/usr/bin/c++  -DGTEST_CREATE_SHARED_LIBRARY=1 -DQT_NO_KEYWORDS -Dgtest_main_EXPORTS -isystem /usr/src/googletest/googletest/include -isystem /usr/src/googletest/googletest  -g -fPIC   -fPIC -Wall -Wshadow -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -DGTEST_HAS_PTHREAD=1 -std=c++11 -o gtest/googletest/CMakeFiles/gtest_main.dir/src/gtest_main.cc.o -c /usr/src/googletest/googletest/src/gtest_main.cc",
+  "directory": "/home/jwang429/catkin_ws/src/rvinci/rvinci/build/gtest/googletest",
+  "command": "/usr/bin/c++  -DGTEST_CREATE_SHARED_LIBRARY=1 -DQT_NO_KEYWORDS -Dgtest_main_EXPORTS -isystem /usr/src/googletest/googletest/include -isystem /usr/src/googletest/googletest  -g -fPIC   -fPIC -Wall -Wshadow -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -DGTEST_HAS_PTHREAD=1 -std=c++11 -o CMakeFiles/gtest_main.dir/src/gtest_main.cc.o -c /usr/src/googletest/googletest/src/gtest_main.cc",
   "file": "/usr/src/googletest/googletest/src/gtest_main.cc"
 },
-
 {
-  "directory": "/home/jwang429/catkin_ws/src/rvinci/rvinci/build",
-  "command": "/usr/bin/c++  -DGTEST_CREATE_SHARED_LIBRARY=1 -DQT_NO_KEYWORDS -Dgtest_EXPORTS -I/usr/src/googletest/googletest/include -I/usr/src/googletest/googletest  -g -fPIC   -fPIC -Wall -Wshadow -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -std=c++11 -o gtest/googletest/CMakeFiles/gtest.dir/src/gtest-all.cc.o -c /usr/src/googletest/googletest/src/gtest-all.cc",
+  "directory": "/home/jwang429/catkin_ws/src/rvinci/rvinci/build/gtest/googletest",
+  "command": "/usr/bin/c++  -DGTEST_CREATE_SHARED_LIBRARY=1 -DQT_NO_KEYWORDS -Dgtest_EXPORTS -I/usr/src/googletest/googletest/include -I/usr/src/googletest/googletest  -g -fPIC   -fPIC -Wall -Wshadow -Wno-error=dangling-else -DGTEST_HAS_PTHREAD=1 -fexceptions -Wextra -Wno-unused-parameter -Wno-missing-field-initializers -std=c++11 -o CMakeFiles/gtest.dir/src/gtest-all.cc.o -c /usr/src/googletest/googletest/src/gtest-all.cc",
   "file": "/usr/src/googletest/googletest/src/gtest-all.cc"
 }
 ]
