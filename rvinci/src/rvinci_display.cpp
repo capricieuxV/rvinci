@@ -775,8 +775,6 @@ void rvinciDisplay::publishMeasurementMarkers()
 
 void rvinciDisplay::setCursorVisibility(bool visible)
 {
-void rvinciDisplay::setCursorVisibility(bool visible)
-{
   interaction_cursor_msgs::InteractionCursorUpdate lhcursor;
   interaction_cursor_msgs::InteractionCursorUpdate rhcursor;
 
@@ -790,7 +788,7 @@ void rvinciDisplay::setCursorVisibility(bool visible)
   rhcursor.show = visible;  // Set visibility
   publisher_rhcursor_.publish(rhcursor);
 }
-}
+
 
 void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg) 
 {

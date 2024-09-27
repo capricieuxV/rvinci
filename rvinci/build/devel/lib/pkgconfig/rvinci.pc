@@ -1,0 +1,8 @@
+prefix=/home/jwang429/catkin_ws/src/rvinci/rvinci/build/devel
+
+Name: rvinci
+Description: Description of rvinci
+Version: 0.0.0
+Cflags: -I/home/jwang429/catkin_ws/src/rvinci/rvinci/include
+Libs: -L${prefix}/lib -lrvinci
+Requires: rviz
