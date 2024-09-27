@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import rospy
 import crtk
+import dvrk
 from sensor_msgs.msg import Joy
 from visualization_msgs.msg import InteractiveMarker, InteractiveMarkerControl, Marker
 from geometry_msgs.msg import PoseStamped
@@ -11,8 +12,11 @@ class DVRKInteractiveMarker:
         rospy.init_node('dvrk_interactive_marker')
 
         # CRTK interfaces for both MTML and MTMR
-        self.arm_mtml = crtk.mtm('MTML')  # Left arm
-        self.arm_mtmr = crtk.mtm('MTMR')  # Right arm
+        self.ral_mtml = crtk.ral('mtml')
+        self.arm_mtml = dvrk.arm(self.ral_mtml, 'MTML')
+
+        self.ral_mtmr = crtk.ral('mtmr')
+        self.arm_mtmr = dvrk.arm(self.ral_mtmr, 'MTMR')
 
         # Subscriber to the clutch pedal
         self.clutch_sub = rospy.Subscriber("/footpedals/clutch", Joy, self.clutch_callback)

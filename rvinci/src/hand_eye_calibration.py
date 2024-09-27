@@ -3,29 +3,16 @@ import dvrk
 import numpy as np
 import PyKDL
 import rospy
-<<<<<<< HEAD
-
-class DaVinciHandEyeCalibration:
-    def __init__(self):
-        # Initialize CRTK and dVRK interfaces for PSM2
-        self.ral_psm = crtk.ral('hand_eye_calibration')
-        self.psm = dvrk.arm(self.ral_psm, 'PSM2')
-=======
 import csv
 from datetime import datetime
 
 class DaVinciHandEyeCalibration:
     def __init__(self):
->>>>>>> master
         
         # Initialize CRTK and dVRK interfaces for MTMR
         self.ral_mtm = crtk.ral('hand_eye_calibration')
         self.mtm = dvrk.arm(self.ral_mtm, 'MTMR')
 
-<<<<<<< HEAD
-        # Initialize variables to store calibration data
-        self.calibration_data = []
-=======
         # Initialize CRTK and dVRK interfaces for PSM2
         self.ral_psm = crtk.ral('hand_eye_calibration')
         self.psm = dvrk.arm(self.ral_psm, 'PSM1')
@@ -36,7 +23,6 @@ class DaVinciHandEyeCalibration:
         
         # Adjust the number of iterations as needed
         self.n_iteration = 5
->>>>>>> master
 
         # Check connections and initialize systems
         self.ral_psm.check_connections()
@@ -55,12 +41,8 @@ class DaVinciHandEyeCalibration:
         rospy.loginfo("Capturing data point... PSM Position: {}, MTM Position: {}".format(psm_position, mtm_position))
 
         # Store the captured data
-<<<<<<< HEAD
-        self.calibration_data.append((psm_position, mtm_position))
-=======
         self.calibration_data_psm.append(psm_position)
         self.calibration_data_mtm.append(mtm_position)
->>>>>>> master
         rospy.loginfo("Captured data point.")
 
     def move_psm_in_cartesian(self, dx=0.0, dy=0.0, dz=0.05, rotation_deg=0.0):
@@ -96,14 +78,6 @@ class DaVinciHandEyeCalibration:
         self.mtm.move_cp(mtm_goal).wait()
 
     def run_calibration(self):
-<<<<<<< HEAD
-        for i in range(5):  # Adjust the number of iterations as needed
-            # Move PSM in Cartesian space
-            self.move_psm_in_cartesian(dx=0.01 * i, dz=0.01 * i, rotation_deg=5 * i)
-            
-            # Move MTM in Cartesian space
-            self.move_mtm_in_cartesian(dx=-0.01 * i, dz=0.01 * i, rotation_deg=-5 * i)
-=======
 
         ##### For now, manually move before calibration #####
 
@@ -120,7 +94,6 @@ class DaVinciHandEyeCalibration:
             
             # Move MTM in Cartesian space
             self.move_mtm_in_cartesian(dx=-0.01 * i, dz=0.01 * i, rotation_deg=-3 * i)
->>>>>>> master
             
             # Capture the data at this configuration
             self.capture_data()
@@ -129,12 +102,6 @@ class DaVinciHandEyeCalibration:
         # After calibration, you could process or save the data
         self.save_calibration_data()
 
-<<<<<<< HEAD
-    def save_calibration_data(self):
-        # Save the captured calibration data for analysis
-        np.save('calibration_data.npy', self.calibration_data)
-        rospy.loginfo("Calibration data saved.")
-=======
     # def save_calibration_data(self):
     #     # Save the captured calibration data for analysis
     #     np.save('calibration_data.npy', self.calibration_data)
@@ -166,7 +133,6 @@ class DaVinciHandEyeCalibration:
             rospy.loginfo(f"Calibration data saved as {filename}.")
         else:
             rospy.logwarn("Unsupported file type. Please use 'csv' or 'npy'.")
->>>>>>> master
 
     def shutdown(self):
         # Shutdown the CRTK and dVRK interfaces
