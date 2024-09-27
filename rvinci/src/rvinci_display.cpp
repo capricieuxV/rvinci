@@ -784,10 +784,64 @@ void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg)
   rvmsg_.clutch = msg->buttons[0];
 }
 
+
+void rvinciDisplay::monoCallback(const sensor_msgs::Joy::ConstPtr& msg){
+  if(single_psm_mode_){
+    // momo quick tap -> set the first point
+    if(msg->buttons[0] == 2 && !first_point_set_){
+        single_psm_start_ = cursor_[marker_side_];
+        first_point_set_ = true;
+        ROS_INFO_STREAM("PSM 1st point set at:" << single_psm_start_.position.x << ", "
+                                                  << single_psm_start_.position.y << ", "
+                                                  << single_psm_start_.position.z);
+                                                  }
+    else if(msg -> buttons[0] == 1 && first_point_set_){
+      single_psm_end_ = cursor_[marker_side_];
+      double distance = calculateDistance(single_psm_start_, single_psm_end_);
+      ROS_INFO_STREAM("PSM 2nd point set at:" << single_psm_end_.position.x << ", "
+                                              << single_psm_end_.position.y << ", "
+                                              << single_psm_end_.position.z);
+      ROS_INFO_STREAM("Distance measured: " << distance * 1000 << " mm");
+      first_point_set_ = false;
+        }
+  }
+}
+
+
 void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg) 
 {
   // buttons: 0 - released, 1 - pressed, 2 - quick tap
   rvmsg_.camera = msg->buttons[0]; 
+  if (single_psm_mode_){
+    if (msg -> buttons[0] == 2 && !first_point_set_){
+      switch (measurement_status_PSM_){
+        case _BEGIN:
+          measurement_status_PSM_ = _START_MEASUREMENT;
+          break;
+        case _START_MEASUREMENT:
+          measurement_status_PSM_ = _MOVING;
+          break;
+        case _MOVING:
+          measurement_status_PSM_ = _END_MEASUREMENT;
+          break;
+        
+
+
+
+      }
+    }
+
+  }
+  if (msg->buttons[0] == 2 && !first_point_set_){
+    switch (measurement_status_PSM_)
+    {
+      case _BEGIN:
+        measurement_status_PSM_ = _START_MEASUREMENT;
+        break;
+      case _START_MEASUREMENT:
+        measurement_status_PSM_ = _MOVING;
+    }
+  }
 
   if (msg->buttons[0] == 2) camera_quick_tap_ = true;
   else camera_quick_tap_ = false;
@@ -953,27 +1007,6 @@ void rvinciDisplay::gripCallback(const std_msgs::Bool::ConstPtr& msg, int i)
   rvmsg_.gripper[i].grab = is_released;
 }
 
-void rvinciDisplay::monoCallback(const sensor_msgs::Joy::ConstPtr& msg){
-  if(single_psm_mode_){
-    // momo quick tap -> set the first point
-    if(msg->buttons[0] == 2 && !first_point_set_){
-        single_psm_start_ = cursor_[marker_side_];
-        first_point_set_ = true;
-        ROS_INFO_STREAM("PSM 1st point set at:" << single_psm_start_.position.x << ", "
-                                                  << single_psm_start_.position.y << ", "
-                                                  << single_psm_start_.position.z);
-                                                  }
-    else if(msg -> buttons[0] == 1 && first_point_set_){
-      single_psm_end_ = cursor_[marker_side_];
-      double distance = calculateDistance(single_psm_start_, single_psm_end_);
-      ROS_INFO_STREAM("PSM 2nd point set at:" << single_psm_end_.position.x << ", "
-                                              << single_psm_end_.position.y << ", "
-                                              << single_psm_end_.position.z);
-      ROS_INFO_STREAM("Distance measured: " << distance * 1000 << " mm");
-      first_point_set_ = false;
-        }
-  }
-}
 
 void rvinciDisplay::coagCallback(const sensor_msgs::Joy::ConstPtr& msg)
 {
