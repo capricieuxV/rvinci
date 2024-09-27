@@ -773,8 +773,7 @@ void rvinciDisplay::publishMeasurementMarkers()
   publisher_markers.publish(marker_arr);
 }
 
-void rvinciDisplay::setCursorVisibility(bool visible)
-{
+
 void rvinciDisplay::setCursorVisibility(bool visible)
 {
   interaction_cursor_msgs::InteractionCursorUpdate lhcursor;

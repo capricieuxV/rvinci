@@ -1,63 +1,99 @@
 #!/usr/bin/env python
-
 import rospy
 import crtk
-import numpy as np
+from sensor_msgs.msg import Joy
+from visualization_msgs.msg import InteractiveMarker, InteractiveMarkerControl, Marker
 from geometry_msgs.msg import PoseStamped
 
-class MeasureMTMLocation:
+class DVRKInteractiveMarker:
     def __init__(self):
         # Initialize the ROS node
-        rospy.init_node('measure_mtm_location')
+        rospy.init_node('dvrk_interactive_marker')
 
-        # Create CRTK interface for MTM (Master Tool Manipulator)
-        self.mtm = crtk.mtm('MTML')  # Replace 'MTML' with 'MTMR' if you are using the right arm
+        # CRTK interfaces for both MTML and MTMR
+        self.arm_mtml = crtk.mtm('MTML')  # Left arm
+        self.arm_mtmr = crtk.mtm('MTMR')  # Right arm
 
-        # ROS Publisher for the MTM pose
-        self.pose_pub = rospy.Publisher('/mtm_pose', PoseStamped, queue_size=10)
+        # Subscriber to the clutch pedal
+        self.clutch_sub = rospy.Subscriber("/footpedals/clutch", Joy, self.clutch_callback)
 
-        # Rate for the loop
-        self.rate = rospy.Rate(10)  # 10 Hz
+        # Subscriber to the grippers (if MTML or MTMR gripped)
+        self.grip_mtml_sub = rospy.Subscriber("/MTML/gripper/closed", Joy, self.grip_callback_mtml)
+        self.grip_mtmr_sub = rospy.Subscriber("/MTMR/gripper/closed", Joy, self.grip_callback_mtmr)
 
-    def measure_location(self):
-        """Measure and publish the MTM's current pose."""
-        while not rospy.is_shutdown():
-            # Get the current pose of the MTM
-            current_pose = self.mtm.measured_cp()
+        # Publisher for the interactive marker
+        self.marker_pub = rospy.Publisher('interactive_marker_topic', InteractiveMarker, queue_size=10)
 
-            # Extract position and orientation
-            position = current_pose.p
-            orientation = current_pose.M.GetQuaternion()
+        # State to track clutch quick-tap and gripping status
+        self.clutch_pressed = False
+        self.mtml_gripped = False
+        self.mtmr_gripped = False
 
-            # Create a PoseStamped message
-            pose_msg = PoseStamped()
-            pose_msg.header.stamp = rospy.Time.now()
-            pose_msg.header.frame_id = "base_link"  # Update this as per your setup
+    def clutch_callback(self, joy_msg):
+        """Callback for clutch pedal status."""
+        # Assuming the first button is the clutch
+        if joy_msg.buttons[0] == 1:  # Clutch pressed
+            self.clutch_pressed = True
+        elif joy_msg.buttons[0] == 2:  # Quick tap
+            self.drop_marker()
 
-            # Set position (x, y, z)
-            pose_msg.pose.position.x = position[0]
-            pose_msg.pose.position.y = position[1]
-            pose_msg.pose.position.z = position[2]
+    def grip_callback_mtml(self, joy_msg):
+        """Callback for MTML gripper status."""
+        self.mtml_gripped = joy_msg.buttons[0] == 1  # If gripped (button pressed)
 
-            # Set orientation (quaternion)
-            pose_msg.pose.orientation.x = orientation[0]
-            pose_msg.pose.orientation.y = orientation[1]
-            pose_msg.pose.orientation.z = orientation[2]
-            pose_msg.pose.orientation.w = orientation[3]
+    def grip_callback_mtmr(self, joy_msg):
+        """Callback for MTMR gripper status."""
+        self.mtmr_gripped = joy_msg.buttons[0] == 1  # If gripped (button pressed)
 
-            # Publish the pose
-            self.pose_pub.publish(pose_msg)
+    def drop_marker(self):
+        """Drop a marker at the position of the MTM that is gripped."""
+        if self.mtml_gripped:
+            # Drop marker for MTML
+            self.add_interactive_marker_at_cursor(self.arm_mtml.measured_cp(), "mtml_marker", "MTML gripped marker")
+        if self.mtmr_gripped:
+            # Drop marker for MTMR
+            self.add_interactive_marker_at_cursor(self.arm_mtmr.measured_cp(), "mtmr_marker", "MTMR gripped marker")
 
-            # Print the position and orientation to the console
-            rospy.loginfo("MTM Position: x={}, y={}, z={}".format(position[0], position[1], position[2]))
-            rospy.loginfo("MTM Orientation: qx={}, qy={}, qz={}, qw={}".format(orientation[0], orientation[1], orientation[2], orientation[3]))
+    def add_interactive_marker_at_cursor(self, pose_stamped, marker_name, description):
+        """Add an interactive marker at the current pose."""
+        # Create an interactive marker
+        int_marker = InteractiveMarker()
+        int_marker.header.frame_id = pose_stamped.header.frame_id
+        int_marker.name = marker_name
+        int_marker.description = description
+        int_marker.scale = 0.1
 
-            # Sleep to maintain the loop rate
-            self.rate.sleep()
+        # Set the pose of the interactive marker
+        int_marker.pose = pose_stamped.pose
+
+        # Create a control for moving the marker
+        control = InteractiveMarkerControl()
+        control.interaction_mode = InteractiveMarkerControl.MOVE_3D
+        control.always_visible = True
+
+        # Create a basic marker (sphere)
+        marker = Marker()
+        marker.type = Marker.SPHERE
+        marker.scale.x = 0.05
+        marker.scale.y = 0.05
+        marker.scale.z = 0.05
+        marker.color.r = 0.0
+        marker.color.g = 1.0
+        marker.color.b = 0.0
+        marker.color.a = 1.0
+
+        # Add the marker to the control
+        control.markers.append(marker)
+
+        # Add the control to the interactive marker
+        int_marker.controls.append(control)
+
+        # Publish the interactive marker
+        self.marker_pub.publish(int_marker)
 
 if __name__ == "__main__":
     try:
-        mtm_location_measurer = MeasureMTMLocation()
-        mtm_location_measurer.measure_location()
+        dvrk_interactive_marker = DVRKInteractiveMarker()
+        rospy.spin()
     except rospy.ROSInterruptException:
         pass
