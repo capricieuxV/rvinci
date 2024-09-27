@@ -98,7 +98,7 @@ Visualization Manager:
       Enabled: true
       Name: InteractionCursorDisplay
       Show Axes: true
-      Show Cursor: true
+      Show Cursor: false
       Update Topic: /rvinci_cursor_right/update
       Value: true
     - Axes Length: 0.10000000149011612
@@ -110,7 +110,7 @@ Visualization Manager:
       Enabled: true
       Name: InteractionCursorDisplay
       Show Axes: true
-      Show Cursor: true
+      Show Cursor: false
       Update Topic: /rvinci_cursor_left/update
       Value: true
     - Class: rviz/MarkerArray

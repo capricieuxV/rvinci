@@ -716,6 +716,7 @@ void rvinciDisplay::publishMeasurementMarkers()
         marker_arr.markers.push_back( deleteMarker(_DELETE) );
         break;
       case _START_MEASUREMENT:
+        ROS_INFO_STREAM("USING" << marker_side_ << "GRIPPER");
         marker_arr.markers.push_back( makeTextMessage(text_pose, "Start measurement", _STATUS_TEXT) );
         marker_arr.markers.push_back( makeMarker(cursor_[marker_side_], _START_POINT) );
         measurement_start_ = cursor_[marker_side_];
@@ -772,10 +773,40 @@ void rvinciDisplay::publishMeasurementMarkers()
   publisher_markers.publish(marker_arr);
 }
 
+void rvinciDisplay::setCursorVisibility(bool visible)
+{
+void rvinciDisplay::setCursorVisibility(bool visible)
+{
+  interaction_cursor_msgs::InteractionCursorUpdate lhcursor;
+  interaction_cursor_msgs::InteractionCursorUpdate rhcursor;
+
+  lhcursor.pose.header.frame_id = context_->getFixedFrame().toStdString();
+  lhcursor.pose.header.stamp = ros::Time::now();
+  lhcursor.show = visible;  // Set visibility
+  publisher_lhcursor_.publish(lhcursor);
+
+  rhcursor.pose.header.frame_id = context_->getFixedFrame().toStdString();
+  rhcursor.pose.header.stamp = ros::Time::now();
+  rhcursor.show = visible;  // Set visibility
+  publisher_rhcursor_.publish(rhcursor);
+}
+}
+
 void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg) 
 {
   // buttons: 0 - released, 1 - pressed, 2 - quick tap
   rvmsg_.clutch = msg->buttons[0];
+
+  if (msg->buttons[0] == 1) // When the clutch pedal is pressed
+  {
+    // Enable the cursor display
+    setCursorVisibility(true);
+  }
+  else if (msg->buttons[0] == 0) // When the clutch pedal is released
+  {
+    // Disable the cursor display
+    setCursorVisibility(false);
+  }
 }
 
 void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg) 
