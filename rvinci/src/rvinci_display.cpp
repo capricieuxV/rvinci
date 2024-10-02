@@ -705,17 +705,20 @@ void rvinciDisplay::publishMeasurementMarkers()
     // Double PSM measurement mode 
     switch (measurement_status_PSM_) {
         case _BEGIN:
-            marker_arr.markers.push_back(deleteMarker(_DELETE));
-            break;
+          marker_arr.markers.push_back(deleteMarker(_DELETE));
+          break;
         case _START_MEASUREMENT:
-            ROS_INFO_STREAM("PSM start: " << PSM_pose_start_.position.x << " " << PSM_pose_start_.position.y << " " << PSM_pose_start_.position.z);
-            marker_arr.markers.push_back(makeTextMessage(text_pose, "Start measurement", _STATUS_TEXT));
-            marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(PSM_pose_start_, PSM_pose_end_) * 1000) + " mm", _DISTANCE_TEXT));
-            break;
+          ROS_INFO_STREAM("PSM start: "<<PSM_pose_start_.position.x<<" "<<PSM_pose_start_.position.y<<" "<<PSM_pose_start_.position.z);
+          ROS_INFO_STREAM("PSM end: "<<PSM_pose_end_.position.x<<" "<<PSM_pose_end_.position.y<<" "<<PSM_pose_end_.position.z);
+          ROS_INFO_STREAM(calculateDistance(PSM_pose_start_, PSM_pose_end_));
+          marker_arr.markers.push_back( makeTextMessage(text_pose, "start measurement", _STATUS_TEXT) );
+          marker_arr.markers.push_back( makeTextMessage(distance_pose, 
+            std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000 )+" mm", _DISTANCE_TEXT) );
+          break;
         case _END_MEASUREMENT:
-            marker_arr.markers.push_back(makeTextMessage(text_pose, "End measurement", _STATUS_TEXT));
-            marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(PSM_pose_start_, PSM_pose_end_) * 1000) + " mm", _DISTANCE_TEXT));
-            break;
+          marker_arr.markers.push_back(makeTextMessage(text_pose, "End measurement", _STATUS_TEXT));
+          marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(PSM_pose_start_, PSM_pose_end_) * 1000) + " mm", _DISTANCE_TEXT));
+          break;
     }
         
   }
@@ -766,38 +769,62 @@ void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg)
   if (msg->buttons[0] == 2) camera_quick_tap_ = true;
   else camera_quick_tap_ = false;
 
-  // MTM measurement - if camera quick tapped while one gripper closed, begin measurement
-  if (camera_quick_tap_ && !rvmsg_.gripper[marker_side_].grab)
-  {
-    switch (measurement_status_MTM)
-    {
-      case _BEGIN: 
-        measurement_status_MTM = _START_MEASUREMENT; 
-        break;
-      case _START_MEASUREMENT: 
-        measurement_status_MTM = _MOVING; 
-        break;
-      case _MOVING: 
-        measurement_status_MTM = _END_MEASUREMENT; 
-        break;
-      case _END_MEASUREMENT: 
-        measurement_status_MTM = _BEGIN; 
-        break;
-    }
-  }
-  else if (camera_quick_tap_ && measurement_status_MTM == _END_MEASUREMENT)
-  {
-    measurement_status_MTM = _BEGIN; 
-  }
-
-  // PSM measurement - if camera quick tapped while left & right gripper closed, end measurement
-  if (camera_quick_tap_ && measurement_status_PSM_ == _END_MEASUREMENT)
+  if (teleop_mode_)
   {
     measurement_status_PSM_ = _BEGIN;
-  }
-  else if (camera_quick_tap_ && start_measurement_PSM_[_LEFT] && start_measurement_PSM_[_RIGHT] && measurement_status_PSM_ == _START_MEASUREMENT)
-  {
-    measurement_status_PSM_ = _END_MEASUREMENT;
+    if (camera_quick_tap_)
+    {
+      switch (measurement_status_PSM_)
+      {
+        case _BEGIN:
+          measurement_status_PSM_ = _START_MEASUREMENT; 
+        break;
+      case _START_MEASUREMENT: 
+        measurement_status_PSM_ = _END_MEASUREMENT; 
+        break;
+      case _END_MEASUREMENT: 
+        measurement_status_PSM_ = _BEGIN; 
+        break;
+      }
+    }
+    else if (camera_quick_tap_ && measurement_status_PSM_ == _END_MEASUREMENT)
+    {
+      measurement_status_PSM_ = _BEGIN;
+    }
+
+  // MTM measurement - if camera quick tapped while one gripper closed, begin measurement
+  // if (camera_quick_tap_ && !rvmsg_.gripper[marker_side_].grab)
+  // {
+  //   switch (measurement_status_MTM)
+  //   {
+  //     case _BEGIN: 
+  //       measurement_status_MTM = _START_MEASUREMENT; 
+  //       break;
+  //     case _START_MEASUREMENT: 
+  //       measurement_status_MTM = _MOVING; 
+  //       break;
+  //     case _MOVING: 
+  //       measurement_status_MTM = _END_MEASUREMENT; 
+  //       break;
+  //     case _END_MEASUREMENT: 
+  //       measurement_status_MTM = _BEGIN; 
+  //       break;
+  //   }
+  // }
+  // else if (camera_quick_tap_ && measurement_status_MTM == _END_MEASUREMENT)
+  // {
+  //   measurement_status_MTM = _BEGIN; 
+  // }
+
+  // // PSM measurement - if camera quick tapped while left & right gripper closed, end measurement
+  // if (camera_quick_tap_ && measurement_status_PSM_ == _END_MEASUREMENT)
+  // {
+  //   measurement_status_PSM_ = _BEGIN;
+  // }
+  // else if (camera_quick_tap_ && start_measurement_PSM_[_LEFT] && start_measurement_PSM_[_RIGHT] && measurement_status_PSM_ == _START_MEASUREMENT)
+  // {
+  //   measurement_status_PSM_ = _END_MEASUREMENT;
+  // }
   }
 }
 
@@ -834,18 +861,18 @@ void rvinciDisplay::PSMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg,
 void rvinciDisplay::teleopCallback(const std_msgs::Bool::ConstPtr& msg)
 {
     teleop_mode_ = msg->data;
-    if (teleop_mode_) {
-        // Switch to PSM mode
-        single_psm_mode_ = true;
-        first_point_set_ = false;
-        measurement_status_PSM_ = _BEGIN;  // Reset PSM measurement status
-        ROS_INFO_STREAM("Teleop enabled: PSM mode activated.");
-    } else {
-        // Switch to MTM mode
-        single_psm_mode_ = false;
-        measurement_status_MTM = _BEGIN;  // Reset MTM measurement status
-        ROS_INFO_STREAM("Teleop disabled: MTM mode activated.");
-    }
+    // if (teleop_mode_) {
+    //     // Switch to PSM mode
+    //     single_psm_mode_ = true;
+    //     first_point_set_ = false;
+    //     measurement_status_PSM_ = _BEGIN;  // Reset PSM measurement status
+    //     ROS_INFO_STREAM("Teleop enabled: PSM mode activated.");
+    // } else {
+    //     // Switch to MTM mode
+    //     single_psm_mode_ = false;
+    //     measurement_status_MTM = _BEGIN;  // Reset MTM measurement status
+    //     ROS_INFO_STREAM("Teleop disabled: MTM mode activated.");
+    // }
 }
 
 
