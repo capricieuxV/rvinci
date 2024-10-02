@@ -212,6 +212,7 @@ private:
   //measurement
   double calculateDistance(geometry_msgs::Pose p1, geometry_msgs::Pose p2);
   void publishMeasurementMarkers();
+  bool isMTM(bool left_grab, bool right_grab, bool coag_mode);
 
   enum MeasurementApp {_BEGIN, _START_MEASUREMENT, _MOVING, _END_MEASUREMENT};
   enum MarkerID {_STATUS_TEXT, _START_POINT, _END_POINT, _LINE, _DISTANCE_TEXT, _DELETE};
@@ -238,6 +239,10 @@ private:
   bool show_axes_left_;
   bool show_cursor_left_;  
   bool start_measurement_PSM_[2];
+  bool single_psm_mode_;
+  bool first_point_set_;
+  
+
   int marker_side_;
   MeasurementApp measurement_status_MTM;
   MeasurementApp measurement_status_PSM_;
@@ -317,6 +322,7 @@ private:
   geometry_msgs::Pose measurement_end_;
   geometry_msgs::Pose PSM_pose_start_;
   geometry_msgs::Pose PSM_pose_end_;
+
 
   rviz::FrameManager frame_manager_;
   std_msgs::Header cam_header_;
