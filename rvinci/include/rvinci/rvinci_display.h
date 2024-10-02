@@ -164,6 +164,8 @@ protected:
   virtual void onInitialize();
   //!Override from rviz display class.
   virtual void update( float wall_dt, float ros_dt );
+
+
 protected Q_SLOTS:
   //!Resets or intializes camera and 3D cursor positions.
   virtual void cameraReset();
@@ -171,6 +173,7 @@ protected Q_SLOTS:
   virtual void pubsubSetup();
   //!Toggle for DVRK Gravity Compensation state
   virtual void gravityCompensation();
+
 private:
   //!Creates viewports and cameras.
   void cameraSetup();
@@ -182,17 +185,18 @@ private:
   void leftCallback(const sensor_msgs::ImageConstPtr& img);
   void rightCallback(const sensor_msgs::ImageConstPtr& img);
   void clutchCallback(const sensor_msgs::Joy::ConstPtr& msg);
+  void teleopCallback(const std_msgs::Bool::ConstPtr& msg);
   void cameraCallback(const sensor_msgs::Joy::ConstPtr& msg);
   void MTMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg, int i);
   void PSMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg, int i);
-  void teleopCallback(const std_msgs::Bool::ConstPtr& msg);
   void gripCallback(const std_msgs::Bool::ConstPtr& grab, int i);
-  void monoCallback(const sensor_msgs::Joy::ConstPtr& msg);
   void coagCallback(const sensor_msgs::Joy::ConstPtr& msg);
   void measurementCallback(const std_msgs::Bool::ConstPtr& msg);
   void cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr& msg);
+
   //!Publishes cursor position and grip state to interaction cursor 3D display type.
   void publishCursorUpdate(int grab[2]);
+  void updateCursorVisibility(const interaction_cursor_msgs::InteractionCursorUpdate& msg);
   //!Logic for grip state, used in interaction cursor 3D display type.
   int getaGrip(bool, int);
   //publish wrench 0 and gravity compensation
@@ -206,8 +210,6 @@ private:
   visualization_msgs::Marker deleteMarker(int id);
 
   //measurement
-  bool isMTM(bool left_grab, bool right_grab, bool coag_mode);
-  bool teleop_mode_;
   double calculateDistance(geometry_msgs::Pose p1, geometry_msgs::Pose p2);
   void publishMeasurementMarkers();
 
@@ -224,13 +226,17 @@ private:
   bool gravity_published_;
   bool left_grab_, right_grab_;
   bool MTM_mm_;
+  bool PSM_mm_;
+  bool teleop_mode_;
   bool Mono_mode_;
   bool coag_init_;
-  bool single_psm_mode_;
-  bool first_point_set_;
-
-
+  bool cursor_visible_;
   bool camera_quick_tap_;
+  bool clutch_quick_tap_;
+  bool show_axes_right_;
+  bool show_cursor_right_;
+  bool show_axes_left_;
+  bool show_cursor_left_;  
   bool start_measurement_PSM_[2];
   int marker_side_;
   MeasurementApp measurement_status_MTM;
@@ -269,8 +275,8 @@ private:
   ros::Subscriber subscriber_lcam_;
   ros::Subscriber subscriber_rcam_;
   ros::Subscriber subscriber_clutch_;
+  ros::Subscriber subscriber_teleop_;
   ros::Subscriber subscriber_camera_;
-  ros::Subscriber subscriber_mono_;
   ros::Subscriber subscriber_coag_;
   ros::Subscriber subscriber_MTML_;
   ros::Subscriber subscriber_MTMR_;
@@ -279,7 +285,6 @@ private:
   ros::Subscriber subscriber_rgrip_;
   ros::Subscriber subscriber_PSM1_;
   ros::Subscriber subscriber_PSM2_;
-  ros::Subscriber subscriber_teleop_;
   ros::Subscriber subscriber_mm_;
   ros::Subscriber subscriber_camera_info_;
 
@@ -312,8 +317,6 @@ private:
   geometry_msgs::Pose measurement_end_;
   geometry_msgs::Pose PSM_pose_start_;
   geometry_msgs::Pose PSM_pose_end_;
-  geometry_msgs::Pose single_psm_start_;
-  geometry_msgs::Pose single_psm_end_;
 
   rviz::FrameManager frame_manager_;
   std_msgs::Header cam_header_;
