@@ -1,5 +1,6 @@
 # REQUIRED: Pose for cursor
 geometry_msgs/PoseStamped pose
+bool show
 
 # OPTIONAL: One or more markers to draw for the cursor
 #           (if empty, just draws a sphere)
