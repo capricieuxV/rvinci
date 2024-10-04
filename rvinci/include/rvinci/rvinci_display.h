@@ -231,6 +231,8 @@ private:
   bool teleop_mode_;
   bool Mono_mode_;
   bool coag_init_;
+  bool left_released_;
+  bool right_released_;
   bool cursor_visible_;
   bool camera_quick_tap_;
   bool clutch_quick_tap_;
@@ -275,6 +277,8 @@ private:
   Ogre::Vector3 input_pos_[2];
   Ogre::Vector3 input_change_[2];
 
+  ros::Time left_grip_timestamp_;
+  ros::Time right_grip_timestamp_;
   ros::NodeHandle nh_;
   ros::Subscriber subscriber_input_;
   ros::Subscriber subscriber_lcam_;
