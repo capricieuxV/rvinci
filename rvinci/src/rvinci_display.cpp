@@ -192,7 +192,6 @@ void rvinciDisplay::pubsubSetup()
   std::string subtopic = prop_ros_topic_->getStdString();
   rvmsg_.header.frame_id = "base_link";
 
-  subscriber_input_ = nh_.subscribe<rvinci_input_msg::rvinci_input>(subtopic, 10, boost::bind(&rvinciDisplay::inputCallback,this,_1));
   subscriber_lcam_ = nh_.subscribe<sensor_msgs::Image>( "/jhu_daVinci/stereo_processed/left/image", 10, boost::bind(&rvinciDisplay::leftCallback,this,_1));
   subscriber_rcam_ = nh_.subscribe<sensor_msgs::Image>( "/jhu_daVinci/stereo_processed/right/image", 10, boost::bind(&rvinciDisplay::rightCallback,this,_1));
   subscriber_clutch_ = nh_.subscribe<sensor_msgs::Joy>( "/footpedals/clutch", 10, boost::bind(&rvinciDisplay::clutchCallback,this,_1));
@@ -213,6 +212,7 @@ void rvinciDisplay::pubsubSetup()
 
   publisher_markers = nh_.advertise<visualization_msgs::MarkerArray>("rvinci_markers", 10);
   publisher_rvinci_ = nh_.advertise<rvinci_input_msg::rvinci_input>("/rvinci_input_update",10);
+}
 
 void rvinciDisplay::leftCallback(const sensor_msgs::ImageConstPtr& img){
 
@@ -323,9 +323,6 @@ void rvinciDisplay::publishCursorUpdate(int grab[2])
   rhcursor.pose.pose = cursor_[_RIGHT];
   rhcursor.button_state = grab[_RIGHT];
 
-  // ROS_INFO_STREAM("left cursor: "<<cursor_[_LEFT].position.x<<" "<<cursor_[_LEFT].position.y<<" "<<cursor_[_LEFT].position.z);
-  // ROS_INFO_STREAM("right cursor: "<<cursor_[_RIGHT].position.x<<" "<<cursor_[_RIGHT].position.y<<" "<<cursor_[_RIGHT].position.z);
-
   publisher_lhcursor_.publish(lhcursor);
   publisher_rhcursor_.publish(rhcursor);
 }
@@ -364,7 +361,7 @@ void rvinciDisplay::cameraReset()
     camera_[i]->setFarClipDistance(100.0f);
     camera_[i]->setFixedYawAxis(true, camera_node_->getOrientation() * Ogre::Vector3::UNIT_Z);
     camera_[i]->setPosition(camera_offset_ - camera_ipd_ + 2*i*camera_ipd_);
-    camera_[i]->lookAt(camera_node_->getPosition())
+    camera_[i]->lookAt(camera_node_->getPosition());
     cursor_[i].position.x = (2*i - 1)*0.6;
     cursor_[i].position.y = 0;
     cursor_[i].position.z = 0;

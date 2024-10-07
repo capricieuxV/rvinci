@@ -179,7 +179,6 @@ private:
   /*!Contains primary input logic. Records input position and calculates change in
    * input position. Updates cursor position then sends data to camera control and cursor publisher.
    */
-  void inputCallback(const rvinci_input_msg::rvinci_input::ConstPtr& r_input);
   void leftCallback(const sensor_msgs::ImageConstPtr& img);
   void rightCallback(const sensor_msgs::ImageConstPtr& img);
   void clutchCallback(const sensor_msgs::Joy::ConstPtr& msg);
