@@ -364,8 +364,7 @@ void rvinciDisplay::cameraReset()
     camera_[i]->setFarClipDistance(100.0f);
     camera_[i]->setFixedYawAxis(true, camera_node_->getOrientation() * Ogre::Vector3::UNIT_Z);
     camera_[i]->setPosition(camera_offset_ - camera_ipd_ + 2*i*camera_ipd_);
-    camera_[i]->lookAt(camera_node_->getPosition());
-
+    camera_[i]->lookAt(camera_node_->getPosition())
     cursor_[i].position.x = (2*i - 1)*0.6;
     cursor_[i].position.y = 0;
     cursor_[i].position.z = 0;
@@ -640,7 +639,7 @@ void rvinciDisplay::publishMeasurementMarkers()
 void rvinciDisplay::updateCursorVisibility(const interaction_cursor_msgs::InteractionCursorUpdate& msg)
 {
     // Update the "Show Cursor" property based on the received message
-    ROS::INFO_STREAM("Show Cursor: " << msg.show);
+    ROS_INFO_STREAM("Show Cursor: " << msg.show);
     if (msg.show)
     {
         this->setProperty("Show Cursor", true);
@@ -722,12 +721,9 @@ void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg)
     }
     else  // Clutch released
     {
+      clutch_quick_tap_ = false;
       clutch_press_start_time_ = ros::Time();  // Reset the timing
     }
-
-    else clutch_quick_tap_ = false;
-
-
 }
 
 void rvinciDisplay::teleopCallback(const std_msgs::Bool::ConstPtr& msg)
