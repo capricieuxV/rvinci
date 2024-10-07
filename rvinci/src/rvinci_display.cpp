@@ -702,6 +702,58 @@ void rvinciDisplay::publishMeasurementMarkers()
   distance_pose.orientation.x = distance_pose.orientation.y = distance_pose.orientation.z = 0.0;
   distance_pose.orientation.w = 1.0;
 
+  // if teleop is on, enter PSM mode
+  if (teleop_mode_){
+    if (left_released_ == 0 && right_released_ == 0){
+      ROS_INFO_STREAM("\n double PSM mode");
+      if (measurement_status_PSM_ == _BEGIN){
+        measurement_status_PSM_ = _START_MEASUREMENT;
+      }
+    }
+    else if (left_released_ == 1 && right_released_ == 1){
+      ROS_INFO_STREAM("\n both gripper released");
+
+    }
+    else {
+      ROS_INFO_STREAM("\n single PSM mode");
+      measurement_status_PSM_ == _BEGIN;
+    }
+  }
+  // if teleop is off, enter MTM mode
+  else{
+    
+    measurement_status_PSM_ = _BEGIN; // ensure PSM is reset
+    switch (measurement_status_MTM) {
+        case _BEGIN:
+            marker_arr.markers.push_back(makeTextMessage(text_pose, "Beginning", _STATUS_TEXT));
+            marker_arr.markers.push_back(deleteMarker(_DELETE));
+            break;
+        case _START_MEASUREMENT:
+            marker_arr.markers.push_back(makeTextMessage(text_pose, "Start measurement", _STATUS_TEXT));
+            marker_arr.markers.push_back(makeMarker(cursor_[marker_side_], _START_POINT));
+            measurement_start_ = cursor_[marker_side_];
+            break;
+        case _MOVING:
+            marker_arr.markers.push_back(makeTextMessage(text_pose, "Moving", _STATUS_TEXT));
+            marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(measurement_start_, cursor_[marker_side_]) * 10) + " mm", _DISTANCE_TEXT));
+            marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
+            marker_arr.markers.push_back(makeMarker(cursor_[marker_side_], _END_POINT));
+            marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, cursor_[marker_side_].position, _LINE));
+            measurement_end_ = cursor_[marker_side_];
+            break;
+        case _END_MEASUREMENT:
+            marker_arr.markers.push_back(makeTextMessage(text_pose, "End measurement", _STATUS_TEXT));
+            marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(measurement_start_, measurement_end_) * 10) + " mm", _DISTANCE_TEXT));
+            marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
+            marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
+            marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, _LINE));
+            break;
+     }
+  }
+
+  
+    
+}
   // if (teleop_mode_) {
   //   ROS_INFO_STREAM("\n############ PSM Mode Enabled ############ \n");
   //   // Double PSM measurement mode 
@@ -755,7 +807,7 @@ void rvinciDisplay::publishMeasurementMarkers()
   //    }
   // }
   // publisher_markers.publish(marker_arr);
-}
+
 
 void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg) 
 {
@@ -886,35 +938,6 @@ void rvinciDisplay::gripCallback(const std_msgs::Bool::ConstPtr& msg, int i)
     right_grip_timestamp_ = ros::Time::now();
     } 
   ros::Duration time_difference = left_grip_timestamp_ - right_grip_timestamp_;
-  
-  // If teleop is off, stay in MTM measurement mode
-  if ( !teleop_mode_ ){
-    // ROS_INFO_STREAM(" ***************************************************\n");
-    measurement_status_MTM = _BEGIN;
-    measurement_status_PSM_ = _BEGIN; // ensure PSM is reset
-  }
-  else if (teleop_mode_){
-    // ROS_INFO_STREAM("\n left value = " <<left_released_);
-    // ROS_INFO_STREAM("\n right value = " <<right_released_);
-
-    // If both gripper closed, goes into double PSM mode
-    if (left_released_ == 0 && right_released_ == 0){
-      if (measurement_status_PSM_ == _BEGIN){
-        ROS_INFO_STREAM("\n double PSM mode");
-        measurement_status_PSM_ = _START_MEASUREMENT;
-      }
-    }
-    // If only one gripper closed, goes into single PSM mode
-    else if (left_released_ && right_released_){
-      ROS_INFO_STREAM("\n both gripper released ");
-      measurement_status_PSM_ == _BEGIN;
-    }
-    else{
-      ROS_INFO_STREAM("\n BBBBBBBBBBB single PSM mode\n");
-      
-    }
-    
-  }
 
 }
 
