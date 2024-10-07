@@ -782,6 +782,7 @@ void rvinciDisplay::publishMeasurementMarkers()
 void rvinciDisplay::updateCursorVisibility(const interaction_cursor_msgs::InteractionCursorUpdate& msg)
 {
     // Update the "Show Cursor" property based on the received message
+    ROS::INFO_STREAM("Show Cursor: " << msg.show);
     if (msg.show)
     {
         this->setProperty("Show Cursor", true);
@@ -813,7 +814,7 @@ void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg)
         // Set the pose of the cursor (this could be dynamically set based on your system's logic)
         cursor_msg.pose.header.frame_id = context_->getFixedFrame().toStdString();
         cursor_msg.pose.header.stamp = ros::Time::now();
-        cursor_msg.pose.pose.position.x = 0.0;  // Example positions
+        cursor_msg.pose.pose.position.x = 0.0; 
         cursor_msg.pose.pose.position.y = 0.0;
         cursor_msg.pose.pose.position.z = 0.0;
 
@@ -821,7 +822,6 @@ void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg)
         cursor_msg.button_state = interaction_cursor_msgs::InteractionCursorUpdate::NONE;  // No buttons pressed
         cursor_msg.key_event = interaction_cursor_msgs::InteractionCursorUpdate::NONE;  // No key event
 
-        // Optionally, you can include markers (such as spheres) for the cursor if needed
         visualization_msgs::Marker marker;
         marker.header.frame_id = context_->getFixedFrame().toStdString();
         marker.header.stamp = ros::Time::now();
@@ -834,6 +834,8 @@ void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg)
         marker.color.b = 0.0;
         marker.color.a = 1.0;
         cursor_msg.markers.push_back(marker);  // Add the marker to the message
+
+        ROS::INFO_STREAM("Clutch quick tap detected");
 
         // Call the updateCursorVisibility function to process the message
         updateCursorVisibility(cursor_msg);
