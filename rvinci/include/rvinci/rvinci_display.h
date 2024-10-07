@@ -171,8 +171,6 @@ protected Q_SLOTS:
   virtual void cameraReset();
   //!Sets up ROS subscribers and publishers
   virtual void pubsubSetup();
-  //!Toggle for DVRK Gravity Compensation state
-  virtual void gravityCompensation();
 
 private:
   //!Creates viewports and cameras.
@@ -197,11 +195,6 @@ private:
   //!Publishes cursor position and grip state to interaction cursor 3D display type.
   void publishCursorUpdate(int grab[2]);
   void updateCursorVisibility(const interaction_cursor_msgs::InteractionCursorUpdate& msg);
-  //!Logic for grip state, used in interaction cursor 3D display type.
-  int getaGrip(bool, int);
-  //publish wrench 0 and gravity compensation
-  void publishGravity();
-  void publishWrench();
 
   //visualization
   visualization_msgs::Marker makeMarker(geometry_msgs::Pose p, int id);
@@ -222,8 +215,6 @@ private:
   bool camera_mode_, clutch_mode_;
   int  coag_mode_;
   bool prev_grab_[2];
-  bool wrench_published_;
-  bool gravity_published_;
   bool left_grab_, right_grab_;
   bool MTM_mm_;
   bool PSM_mm_;
@@ -287,20 +278,13 @@ private:
   ros::Subscriber subscriber_rgrip_;
   ros::Subscriber subscriber_PSM1_;
   ros::Subscriber subscriber_PSM2_;
-  ros::Subscriber subscriber_mm_;
-  ros::Subscriber subscriber_camera_info_;
 
   ros::Publisher publisher_rhcursor_;
   ros::Publisher publisher_lhcursor_;
   ros::Publisher publisher_rhcursor_display_;
   ros::Publisher publisher_lhcursor_display_;
-  ros::Publisher pub_robot_state_[2];
   ros::Publisher publisher_rvinci_;
   ros::Publisher publisher_markers;
-  ros::Publisher publisher_lwrench_;
-  ros::Publisher publisher_rwrench_;
-  ros::Publisher publisher_lgravity_;
-  ros::Publisher publisher_rgravity_;
 
   ros::Time clutch_press_start_time_;
 
@@ -310,7 +294,6 @@ private:
   rviz::VectorProperty *prop_camera_posit_;
   rviz::VectorProperty *prop_input_scalar_;
   rviz::RosTopicProperty *prop_ros_topic_;
-  rviz::BoolProperty *prop_gravity_comp_;
   rviz::BoolProperty *prop_cam_reset_;
 
   rviz::RenderWidget *render_widget_;
