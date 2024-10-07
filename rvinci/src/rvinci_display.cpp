@@ -363,6 +363,10 @@ void rvinciDisplay::cameraReset()
     camera_[i]->setFixedYawAxis(true, camera_node_->getOrientation() * Ogre::Vector3::UNIT_Z);
     camera_[i]->setPosition(camera_offset_ - camera_ipd_ + 2*i*camera_ipd_);
     camera_[i]->lookAt(camera_node_->getPosition());
+<<<<<<< HEAD
+=======
+
+>>>>>>> parent of 03b1f39 (fixed ros_info_stream)
     cursor_[i].position.x = (2*i - 1)*0.6;
     cursor_[i].position.y = 0;
     cursor_[i].position.z = 0;
