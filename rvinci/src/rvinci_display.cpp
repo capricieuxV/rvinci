@@ -39,7 +39,7 @@ rvinciDisplay::rvinciDisplay()
   , camera_node_(0)
   , window_(0)
   , window_R_(0)
-  , camera_offset_(0.0,-3.0,1.5)
+  , camera_offset_(0.0, 0.0, 0.0)
 {
   std::string rviz_path = ros::package::getPath(ROS_PACKAGE_NAME);
   Ogre::ResourceGroupManager::getSingleton().addResourceLocation( rviz_path + "/ogre_media", "FileSystem", ROS_PACKAGE_NAME );
@@ -153,7 +153,7 @@ void rvinciDisplay::onInitialize()
   start_measurement_PSM_[_RIGHT] = false;
   gravity_published_ = false;
   wrench_published_ = false;
-  MTM_mm_ = false;
+  MTM_mm_ = true; // default measurement mode is MTM
   PSM_mm_ = false;
   cursor_visible_ = false;
   teleop_mode_ = false;
@@ -697,17 +697,17 @@ void rvinciDisplay::publishMeasurementMarkers()
   distance_pose.orientation.w = 1.0;
 
   if (MTM_mm_) {  // MTM measurement
-    ROS_INFO_STREAM("\n************** MTM measurement **************\n");
+    // ROS_INFO_STREAM("\n************** MTM measurement **************\n");
     marker_arr.markers.push_back( makeTextMessage(text_pose, "MTM MEASUREMENT", _STATUS_TEXT) );
     switch (measurement_status_MTM)
     {
       case _BEGIN:
-        ROS_INFO_STREAM("BEGINNING");
+        // ROS_INFO_STREAM("BEGINNING");
         marker_arr.markers.push_back( makeTextMessage(text_pose, "Beginning", _STATUS_TEXT) );
         marker_arr.markers.push_back( deleteMarker(_DELETE) );
         break;
       case _START_MEASUREMENT:
-        ROS_INFO_STREAM("USING" << marker_side_ << "GRIPPER");
+        // ROS_INFO_STREAM("USING" << marker_side_ << "GRIPPER");
         marker_arr.markers.push_back( makeTextMessage(text_pose, "Start measurement", _STATUS_TEXT) );
         marker_arr.markers.push_back( makeMarker(cursor_[marker_side_], _START_POINT) );
         measurement_start_ = cursor_[marker_side_];
@@ -718,7 +718,7 @@ void rvinciDisplay::publishMeasurementMarkers()
         std::to_string(calculateDistance(measurement_start_, cursor_[marker_side_])*10)+" mm", _DISTANCE_TEXT) );
         marker_arr.markers.push_back( makeMarker(measurement_start_, _START_POINT) );
         marker_arr.markers.push_back( makeMarker(cursor_[marker_side_], _END_POINT) );
-        ROS_INFO_STREAM("marker_side : "<< marker_side_);
+        // ROS_INFO_STREAM("marker_side : "<< marker_side_);
         marker_arr.markers.push_back( makeLineMarker(measurement_start_.position, cursor_[marker_side_].position, _LINE) );
         measurement_end_ = cursor_[marker_side_];
         break;
@@ -735,16 +735,16 @@ void rvinciDisplay::publishMeasurementMarkers()
   // TODO: PSM measurement
   // To measure PSM, both left and right grippers should be closed and footpedal should be pressed
   else if (PSM_mm_){  // PSM measurement
-    ROS_INFO_STREAM("\n&&&&&&&&&&&&&& PSM measurement &&&&&&&&&&&&&&\n");
+    // ROS_INFO_STREAM("\n&&&&&&&&&&&&&& PSM measurement &&&&&&&&&&&&&&\n");
     switch(measurement_status_PSM_)
     {
       case _BEGIN:
         marker_arr.markers.push_back( deleteMarker(_DELETE) );
         break;
       case _START_MEASUREMENT:
-        ROS_INFO_STREAM("PSM start: "<<PSM_pose_start_.position.x<<" "<<PSM_pose_start_.position.y<<" "<<PSM_pose_start_.position.z);
-        ROS_INFO_STREAM("PSM end: "<<PSM_pose_end_.position.x<<" "<<PSM_pose_end_.position.y<<" "<<PSM_pose_end_.position.z);
-        ROS_INFO_STREAM(calculateDistance(PSM_pose_start_, PSM_pose_end_));
+        // ROS_INFO_STREAM("PSM start: "<<PSM_pose_start_.position.x<<" "<<PSM_pose_start_.position.y<<" "<<PSM_pose_start_.position.z);
+        // ROS_INFO_STREAM("PSM end: "<<PSM_pose_end_.position.x<<" "<<PSM_pose_end_.position.y<<" "<<PSM_pose_end_.position.z);
+        // ROS_INFO_STREAM(calculateDistance(PSM_pose_start_, PSM_pose_end_));
         marker_arr.markers.push_back( makeTextMessage(text_pose, "start measurement", _STATUS_TEXT) );
         marker_arr.markers.push_back( makeTextMessage(distance_pose, 
           std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000)+" mm", _DISTANCE_TEXT) );
@@ -839,13 +839,13 @@ void rvinciDisplay::teleopCallback(const std_msgs::Bool::ConstPtr& msg)
 
     if (teleop_mode_)
     {
-      ROS_INFO_STREAM("PSM measurement mode");
+      // ROS_INFO_STREAM("PSM measurement mode");
       PSM_mm_ = true;
       MTM_mm_ = false;
     }
     else if (!teleop_mode_)
     {
-      ROS_INFO_STREAM("MTM measurement mode");
+      // ROS_INFO_STREAM("MTM measurement mode");
       PSM_mm_ = false;
       MTM_mm_ = true;
     }
