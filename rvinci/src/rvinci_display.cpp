@@ -115,7 +115,6 @@ rvinciDisplay::~rvinciDisplay()
   delete prop_camera_posit_;
   delete prop_input_scalar_;
 }
-
 void rvinciDisplay::onInitialize()
 {
   render_widget_ = new rviz::RenderWidget(rviz::RenderSystem::get());
@@ -148,11 +147,13 @@ void rvinciDisplay::onInitialize()
 
   pubsubSetup();
 
+  // publishWrenchGravity();
+
   start_measurement_PSM_[_LEFT] = false;
   start_measurement_PSM_[_RIGHT] = false;
   gravity_published_ = false;
   wrench_published_ = false;
-  MTM_mm_ = true;
+  MTM_mm_ = false;
   PSM_mm_ = false;
   cursor_visible_ = false;
   teleop_mode_ = false;
@@ -160,7 +161,6 @@ void rvinciDisplay::onInitialize()
   right_grab_ = false;
   camera_quick_tap_ = false;
   clutch_quick_tap_ = false;
-  flag_delete_marker_ = false;
   show_axes_right_ = true; 
   show_cursor_right_ = false;
   show_axes_left_ = true;
@@ -173,7 +173,6 @@ void rvinciDisplay::onInitialize()
   input_pos_[_LEFT].x = input_pos_[_LEFT].y = input_pos_[_LEFT].z = 0;
   input_pos_[_RIGHT].x = input_pos_[_RIGHT].y = input_pos_[_RIGHT].z = 0;
 }
-
 void rvinciDisplay::update(float wall_dt, float ros_dt)
 {
   if( backgroundImage_[0] != NULL ){
@@ -705,11 +704,7 @@ void rvinciDisplay::publishMeasurementMarkers()
       case _BEGIN:
         ROS_INFO_STREAM("BEGINNING");
         marker_arr.markers.push_back( makeTextMessage(text_pose, "Beginning", _STATUS_TEXT) );
-        if (flag_delete_marker_)
-        {
-          marker_arr.markers.push_back( deleteMarker(_DELETE) );
-          flag_delete_marker_ = false;
-        }
+        marker_arr.markers.push_back( deleteMarker(_DELETE) );
         break;
       case _START_MEASUREMENT:
         ROS_INFO_STREAM("USING" << marker_side_ << "GRIPPER");
@@ -744,11 +739,7 @@ void rvinciDisplay::publishMeasurementMarkers()
     switch(measurement_status_PSM_)
     {
       case _BEGIN:
-        if (flag_delete_marker_)
-        {
-          marker_arr.markers.push_back( deleteMarker(_DELETE) );
-          flag_delete_marker_ = false;
-        }
+        marker_arr.markers.push_back( deleteMarker(_DELETE) );
         break;
       case _START_MEASUREMENT:
         ROS_INFO_STREAM("PSM start: "<<PSM_pose_start_.position.x<<" "<<PSM_pose_start_.position.y<<" "<<PSM_pose_start_.position.z);
@@ -765,10 +756,10 @@ void rvinciDisplay::publishMeasurementMarkers()
         break;
     }
   }
-  // else
-  // {
-  //   ROS_INFO_STREAM("No measurement mode selected");
-  // }
+  else
+  {
+    ROS_INFO_STREAM("No measurement mode selected");
+  }
 
   // PSM marker location test
   // marker_arr.markers.push_back( makeMarker(PSM_pose_start_, _START_POINT) );
@@ -780,7 +771,6 @@ void rvinciDisplay::publishMeasurementMarkers()
 void rvinciDisplay::updateCursorVisibility(const interaction_cursor_msgs::InteractionCursorUpdate& msg)
 {
     // Update the "Show Cursor" property based on the received message
-    ROS_INFO_STREAM("Show Cursor: " << msg.show);
     if (msg.show)
     {
         this->setProperty("Show Cursor", true);
@@ -797,7 +787,7 @@ void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg)
     // buttons: 0 - released, 1 - pressed, 2 - quick tap
     clutch_mode_ = msg->buttons[0];
 
-    if (clutch_mode_ == 2) {
+    if (msg->buttons[0] == 2) {
       clutch_quick_tap_ = true;
 
       if (clutch_quick_tap_)
@@ -812,7 +802,7 @@ void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg)
         // Set the pose of the cursor (this could be dynamically set based on your system's logic)
         cursor_msg.pose.header.frame_id = context_->getFixedFrame().toStdString();
         cursor_msg.pose.header.stamp = ros::Time::now();
-        cursor_msg.pose.pose.position.x = 0.0; 
+        cursor_msg.pose.pose.position.x = 0.0;  // Example positions
         cursor_msg.pose.pose.position.y = 0.0;
         cursor_msg.pose.pose.position.z = 0.0;
 
@@ -820,6 +810,7 @@ void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg)
         cursor_msg.button_state = interaction_cursor_msgs::InteractionCursorUpdate::NONE;  // No buttons pressed
         cursor_msg.key_event = interaction_cursor_msgs::InteractionCursorUpdate::NONE;  // No key event
 
+        // Optionally, you can include markers (such as spheres) for the cursor if needed
         visualization_msgs::Marker marker;
         marker.header.frame_id = context_->getFixedFrame().toStdString();
         marker.header.stamp = ros::Time::now();
@@ -833,34 +824,10 @@ void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg)
         marker.color.a = 1.0;
         cursor_msg.markers.push_back(marker);  // Add the marker to the message
 
-      ROS_INFO_STREAM("Clutch quick tap detected");
-
         // Call the updateCursorVisibility function to process the message
         updateCursorVisibility(cursor_msg);
       }
     }
-    else if (clutch_mode_ == 1)
-    {
-        if (clutch_press_start_time_.isZero())  // If this is the first press, start timing
-        {
-            clutch_press_start_time_ = ros::Time::now();
-        }
-        else
-        {
-            // Check if the clutch has been held for more than 3 seconds
-            if ((ros::Time::now() - clutch_press_start_time_).toSec() > 3.0)
-            { 
-              flag_delete_marker_ = true;
-              ROS_INFO_STREAM("!!!!!!Delete markers!!!!!!!!");
-              clutch_press_start_time_ = ros::Time();  // Reset the timing
-            }
-        }
-    }
-    else  // Clutch released
-    {
-      clutch_press_start_time_ = ros::Time();  // Reset the timing
-    }
-
     else clutch_quick_tap_ = false;
 
 
@@ -1060,6 +1027,18 @@ void rvinciDisplay::coagCallback(const sensor_msgs::Joy::ConstPtr& msg)
     grab[_RIGHT] = 0;
     publishCursorUpdate(grab);
   }
+}
+
+void rvinciDisplay::cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr& msg)
+{
+  fx_ = msg->P[0];
+  tx_ = msg->P[3];
+  cx_ = msg->P[2];
+  cy_ = msg->P[6];
+  fy_ = msg->P[5];
+  cam_header_ = msg->header;
+  img_width_ = msg->width;
+  img_height_ = msg->height;
 }
 
 double rvinciDisplay::calculateDistance(geometry_msgs::Pose p1, geometry_msgs::Pose p2)
