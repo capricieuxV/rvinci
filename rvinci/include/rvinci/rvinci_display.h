@@ -164,6 +164,8 @@ protected:
   virtual void onInitialize();
   //!Override from rviz display class.
   virtual void update( float wall_dt, float ros_dt );
+
+
 protected Q_SLOTS:
   //!Resets or intializes camera and 3D cursor positions.
   virtual void cameraReset();
@@ -171,6 +173,7 @@ protected Q_SLOTS:
   virtual void pubsubSetup();
   //!Toggle for DVRK Gravity Compensation state
   virtual void gravityCompensation();
+
 private:
   //!Creates viewports and cameras.
   void cameraSetup();
@@ -178,19 +181,22 @@ private:
   /*!Contains primary input logic. Records input position and calculates change in
    * input position. Updates cursor position then sends data to camera control and cursor publisher.
    */
+  void inputCallback(const rvinci_input_msg::rvinci_input::ConstPtr& r_input);
   void leftCallback(const sensor_msgs::ImageConstPtr& img);
   void rightCallback(const sensor_msgs::ImageConstPtr& img);
   void clutchCallback(const sensor_msgs::Joy::ConstPtr& msg);
+  void teleopCallback(const std_msgs::Bool::ConstPtr& msg);
   void cameraCallback(const sensor_msgs::Joy::ConstPtr& msg);
   void MTMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg, int i);
   void PSMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg, int i);
   void gripCallback(const std_msgs::Bool::ConstPtr& grab, int i);
-
   void coagCallback(const sensor_msgs::Joy::ConstPtr& msg);
   void measurementCallback(const std_msgs::Bool::ConstPtr& msg);
   void cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr& msg);
+
   //!Publishes cursor position and grip state to interaction cursor 3D display type.
   void publishCursorUpdate(int grab[2]);
+  void updateCursorVisibility(const interaction_cursor_msgs::InteractionCursorUpdate& msg);
   //!Logic for grip state, used in interaction cursor 3D display type.
   int getaGrip(bool, int);
   //publish wrench 0 and gravity compensation
@@ -204,10 +210,8 @@ private:
   visualization_msgs::Marker deleteMarker(int id);
 
   //measurement
-  bool isMTM(bool left_grab, bool right_grab, bool coag_mode);
   double calculateDistance(geometry_msgs::Pose p1, geometry_msgs::Pose p2);
   void publishMeasurementMarkers();
-  void setCursorVisibility(bool visible);
 
   enum MeasurementApp {_BEGIN, _START_MEASUREMENT, _MOVING, _END_MEASUREMENT};
   enum MarkerID {_STATUS_TEXT, _START_POINT, _END_POINT, _LINE, _DISTANCE_TEXT, _DELETE};
@@ -218,15 +222,22 @@ private:
   bool camera_mode_, clutch_mode_;
   int  coag_mode_;
   bool prev_grab_[2];
+  bool wrench_published_;
+  bool gravity_published_;
   bool left_grab_, right_grab_;
   bool MTM_mm_;
+  bool PSM_mm_;
+  bool teleop_mode_;
   bool Mono_mode_;
   bool coag_init_;
-
+  bool cursor_visible_;
   bool camera_quick_tap_;
+  bool clutch_quick_tap_;
+  bool show_axes_right_;
+  bool show_cursor_right_;
+  bool show_axes_left_;
+  bool show_cursor_left_;  
   bool start_measurement_PSM_[2];
-  bool single_psm_mode_;
-  bool first_point_set_;
 
   int marker_side_;
   MeasurementApp measurement_status_MTM;
@@ -260,14 +271,12 @@ private:
   Ogre::Vector3 input_pos_[2];
   Ogre::Vector3 input_change_[2];
 
-  ros::Time left_grip_timestamp_;
-  ros::Time right_grip_timestamp_;
-  ros::Time clutch_press_start_time_;
   ros::NodeHandle nh_;
   ros::Subscriber subscriber_input_;
   ros::Subscriber subscriber_lcam_;
   ros::Subscriber subscriber_rcam_;
   ros::Subscriber subscriber_clutch_;
+  ros::Subscriber subscriber_teleop_;
   ros::Subscriber subscriber_camera_;
   ros::Subscriber subscriber_coag_;
   ros::Subscriber subscriber_MTML_;
@@ -277,13 +286,20 @@ private:
   ros::Subscriber subscriber_rgrip_;
   ros::Subscriber subscriber_PSM1_;
   ros::Subscriber subscriber_PSM2_;
+  ros::Subscriber subscriber_mm_;
+  ros::Subscriber subscriber_camera_info_;
 
   ros::Publisher publisher_rhcursor_;
   ros::Publisher publisher_lhcursor_;
   ros::Publisher publisher_rhcursor_display_;
   ros::Publisher publisher_lhcursor_display_;
+  ros::Publisher pub_robot_state_[2];
   ros::Publisher publisher_rvinci_;
   ros::Publisher publisher_markers;
+  ros::Publisher publisher_lwrench_;
+  ros::Publisher publisher_rwrench_;
+  ros::Publisher publisher_lgravity_;
+  ros::Publisher publisher_rgravity_;
 
   ros::Time clutch_press_start_time_;
 
@@ -293,6 +309,7 @@ private:
   rviz::VectorProperty *prop_camera_posit_;
   rviz::VectorProperty *prop_input_scalar_;
   rviz::RosTopicProperty *prop_ros_topic_;
+  rviz::BoolProperty *prop_gravity_comp_;
   rviz::BoolProperty *prop_cam_reset_;
 
   rviz::RenderWidget *render_widget_;
@@ -303,7 +320,6 @@ private:
   geometry_msgs::Pose measurement_end_;
   geometry_msgs::Pose PSM_pose_start_;
   geometry_msgs::Pose PSM_pose_end_;
-
 
   rviz::FrameManager frame_manager_;
   std_msgs::Header cam_header_;
