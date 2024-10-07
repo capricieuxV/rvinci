@@ -233,11 +233,13 @@ private:
   bool cursor_visible_;
   bool camera_quick_tap_;
   bool clutch_quick_tap_;
+  bool flag_delete_marker_;
   bool show_axes_right_;
   bool show_cursor_right_;
   bool show_axes_left_;
   bool show_cursor_left_;  
   bool start_measurement_PSM_[2];
+
   int marker_side_;
   MeasurementApp measurement_status_MTM;
   MeasurementApp measurement_status_PSM_;
@@ -299,6 +301,8 @@ private:
   ros::Publisher publisher_rwrench_;
   ros::Publisher publisher_lgravity_;
   ros::Publisher publisher_rgravity_;
+
+  ros::Time clutch_press_start_time_;
 
   rviz::VectorProperty *prop_cam_focus_;
   rviz::QuaternionProperty *property_camrot_;

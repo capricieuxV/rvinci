@@ -115,6 +115,7 @@ rvinciDisplay::~rvinciDisplay()
   delete prop_camera_posit_;
   delete prop_input_scalar_;
 }
+
 void rvinciDisplay::onInitialize()
 {
   render_widget_ = new rviz::RenderWidget(rviz::RenderSystem::get());
@@ -161,6 +162,7 @@ void rvinciDisplay::onInitialize()
   right_grab_ = false;
   camera_quick_tap_ = false;
   clutch_quick_tap_ = false;
+  flag_delete_marker_ = false;
   show_axes_right_ = true; 
   show_cursor_right_ = false;
   show_axes_left_ = true;
@@ -173,6 +175,7 @@ void rvinciDisplay::onInitialize()
   input_pos_[_LEFT].x = input_pos_[_LEFT].y = input_pos_[_LEFT].z = 0;
   input_pos_[_RIGHT].x = input_pos_[_RIGHT].y = input_pos_[_RIGHT].z = 0;
 }
+
 void rvinciDisplay::update(float wall_dt, float ros_dt)
 {
   if( backgroundImage_[0] != NULL ){
@@ -704,7 +707,11 @@ void rvinciDisplay::publishMeasurementMarkers()
       case _BEGIN:
         ROS_INFO_STREAM("BEGINNING");
         marker_arr.markers.push_back( makeTextMessage(text_pose, "Beginning", _STATUS_TEXT) );
-        marker_arr.markers.push_back( deleteMarker(_DELETE) );
+        if (flag_delete_marker_)
+        {
+          marker_arr.markers.push_back( deleteMarker(_DELETE) );
+          flag_delete_marker_ = false;
+        }
         break;
       case _START_MEASUREMENT:
         ROS_INFO_STREAM("USING" << marker_side_ << "GRIPPER");
@@ -739,7 +746,11 @@ void rvinciDisplay::publishMeasurementMarkers()
     switch(measurement_status_PSM_)
     {
       case _BEGIN:
-        marker_arr.markers.push_back( deleteMarker(_DELETE) );
+        if (flag_delete_marker_)
+        {
+          marker_arr.markers.push_back( deleteMarker(_DELETE) );
+          flag_delete_marker_ = false;
+        }
         break;
       case _START_MEASUREMENT:
         ROS_INFO_STREAM("PSM start: "<<PSM_pose_start_.position.x<<" "<<PSM_pose_start_.position.y<<" "<<PSM_pose_start_.position.z);
@@ -787,7 +798,7 @@ void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg)
     // buttons: 0 - released, 1 - pressed, 2 - quick tap
     clutch_mode_ = msg->buttons[0];
 
-    if (msg->buttons[0] == 2) {
+    if (clutch_mode_ == 2) {
       clutch_quick_tap_ = true;
 
       if (clutch_quick_tap_)
@@ -828,6 +839,28 @@ void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg)
         updateCursorVisibility(cursor_msg);
       }
     }
+    else if (clutch_mode_ == 1)
+    {
+        if (clutch_press_start_time_.isZero())  // If this is the first press, start timing
+        {
+            clutch_press_start_time_ = ros::Time::now();
+        }
+        else
+        {
+            // Check if the clutch has been held for more than 3 seconds
+            if ((ros::Time::now() - clutch_press_start_time_).toSec() > 3.0)
+            { 
+              flag_delete_marker_ = true;
+              ROS::INFO_STREAM("!!!!!!Delete markers!!!!!!!!");
+              clutch_press_start_time_ = ros::Time();  // Reset the timing
+            }
+        }
+    }
+    else  // Clutch released
+    {
+      clutch_press_start_time_ = ros::Time();  // Reset the timing
+    }
+
     else clutch_quick_tap_ = false;
 
 
