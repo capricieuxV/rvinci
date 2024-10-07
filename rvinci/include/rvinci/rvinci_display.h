@@ -233,6 +233,7 @@ private:
   bool cursor_visible_;
   bool camera_quick_tap_;
   bool clutch_quick_tap_;
+  bool flag_delete_marker_;
   bool show_axes_right_;
   bool show_cursor_right_;
   bool show_axes_left_;
