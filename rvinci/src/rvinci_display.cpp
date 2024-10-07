@@ -737,32 +737,32 @@ void rvinciDisplay::publishMeasurementMarkers()
   else{
     
     measurement_status_PSM_ = _BEGIN; // ensure PSM is reset
-    switch (measurement_status_MTM) {
-        case _BEGIN:
-            marker_arr.markers.push_back(makeTextMessage(text_pose, "Beginning", _STATUS_TEXT));
-            marker_arr.markers.push_back(deleteMarker(_DELETE));
-            break;
-        case _START_MEASUREMENT:
-            marker_arr.markers.push_back(makeTextMessage(text_pose, "Start measurement", _STATUS_TEXT));
-            marker_arr.markers.push_back(makeMarker(cursor_[marker_side_], _START_POINT));
-            measurement_start_ = cursor_[marker_side_];
-            break;
-        case _MOVING:
-            marker_arr.markers.push_back(makeTextMessage(text_pose, "Moving", _STATUS_TEXT));
-            marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(measurement_start_, cursor_[marker_side_]) * 10) + " mm", _DISTANCE_TEXT));
-            marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
-            marker_arr.markers.push_back(makeMarker(cursor_[marker_side_], _END_POINT));
-            marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, cursor_[marker_side_].position, _LINE));
-            measurement_end_ = cursor_[marker_side_];
-            break;
-        case _END_MEASUREMENT:
-            marker_arr.markers.push_back(makeTextMessage(text_pose, "End measurement", _STATUS_TEXT));
-            marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(measurement_start_, measurement_end_) * 10) + " mm", _DISTANCE_TEXT));
-            marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
-            marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
-            marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, _LINE));
-            break;
-     }
+    // switch (measurement_status_MTM) {
+    //     case _BEGIN:
+    //         marker_arr.markers.push_back(makeTextMessage(text_pose, "Beginning", _STATUS_TEXT));
+    //         marker_arr.markers.push_back(deleteMarker(_DELETE));
+    //         break;
+    //     case _START_MEASUREMENT:
+    //         marker_arr.markers.push_back(makeTextMessage(text_pose, "Start measurement", _STATUS_TEXT));
+    //         marker_arr.markers.push_back(makeMarker(cursor_[marker_side_], _START_POINT));
+    //         measurement_start_ = cursor_[marker_side_];
+    //         break;
+    //     case _MOVING:
+    //         marker_arr.markers.push_back(makeTextMessage(text_pose, "Moving", _STATUS_TEXT));
+    //         marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(measurement_start_, cursor_[marker_side_]) * 10) + " mm", _DISTANCE_TEXT));
+    //         marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
+    //         marker_arr.markers.push_back(makeMarker(cursor_[marker_side_], _END_POINT));
+    //         marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, cursor_[marker_side_].position, _LINE));
+    //         measurement_end_ = cursor_[marker_side_];
+    //         break;
+    //     case _END_MEASUREMENT:
+    //         marker_arr.markers.push_back(makeTextMessage(text_pose, "End measurement", _STATUS_TEXT));
+    //         marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(measurement_start_, measurement_end_) * 10) + " mm", _DISTANCE_TEXT));
+    //         marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
+    //         marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
+    //         marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, _LINE));
+    //         break;
+    //  }
   }
 
   
@@ -956,11 +956,6 @@ void rvinciDisplay::gripCallback(const std_msgs::Bool::ConstPtr& msg, int i)
   ros::Duration time_difference = left_grip_timestamp_ - right_grip_timestamp_;
 
 }
-
-/* Need to solve the issue of regripping after releasing both grippers!
-  Regripping both should go to double PSM mode,
-  instead, in goes into single PSM mode now
-*/
   
 
 
