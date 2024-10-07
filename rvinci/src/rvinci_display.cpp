@@ -141,18 +141,10 @@ void rvinciDisplay::onInitialize()
   MTM_mm_ = true;
   gravity_published_ = false;
   wrench_published_ = false;
-  PSM_mm_ = false;
-  cursor_visible_ = false;
-  teleop_mode_ = false;
+  MTM_mm_ = false;
   left_grab_ = false;
   right_grab_ = false;
-  camera_quick_tap_ = false;
-  clutch_quick_tap_ = false;
-  flag_delete_marker_ = false;
-  show_axes_right_ = true; 
-  show_cursor_right_ = false;
-  show_axes_left_ = true;
-  show_cursor_left_ = false;  Mono_mode_ = false;
+  Mono_mode_ = false;
   coag_init_ = true;
   clutch_press_start_time_ = 0.0;
 
@@ -187,19 +179,19 @@ void rvinciDisplay::update(float wall_dt, float ros_dt)
 
   publishMeasurementMarkers();
 
-  if (!wrench_published_) 
-  {
-    publishWrench();
-    wrench_published_ = true;
-  }
-  if (wrench_published_ && !gravity_published_)
-  {
-    publishGravity();
-    gravity_published_ = true;
-  }
+  // if (!wrench_published_) 
+  // {
+  //   publishWrench();
+  //   wrench_published_ = true;
+  // }
+  // if (wrench_published_ && !gravity_published_)
+  // {
+  //   publishGravity();
+  //   gravity_published_ = true;
+  // }
 
-  publishWrench();
-  publishGravity();
+  // publishWrench();
+  // publishGravity();
   
 }
 
@@ -223,13 +215,12 @@ void rvinciDisplay::pubsubSetup()
   subscriber_PSM1_ = nh_.subscribe<geometry_msgs::PoseStamped>("/PSM1/measured_cp", 10, boost::bind(&rvinciDisplay::PSMCallback,this,_1, _RIGHT));
   subscriber_PSM2_ = nh_.subscribe<geometry_msgs::PoseStamped>("/PSM2/measured_cp", 10, boost::bind(&rvinciDisplay::PSMCallback,this,_1, _LEFT));
   // subscriber_mm_ = nh_.subscribe<std_msgs::Bool>("/rvinci_measurement_MTM", 10, boost::bind(&rvinciDisplay::measurementCallback,this,_1));
-  subscriber_teleop_ = nh_.subscribe<std_msgs::Bool>("/console/teleop/enabled", 10, boost::bind(&rvinciDisplay::teleopCallback, this, _1));
   subscriber_camera_info_ = nh_.subscribe<sensor_msgs::CameraInfo>("/jhu_daVinci/stereo_processed/right/camera_info", 10, boost::bind(&rvinciDisplay::cameraInfoCallback,this,_1));
 
-  publisher_rhcursor_ = nh_.advertise<interaction_cursor_msgs::InteractionCursorUpdate>("/rvinci_cursor_right/update",10);
-  publisher_lhcursor_ = nh_.advertise<interaction_cursor_msgs::InteractionCursorUpdate>("/rvinci_cursor_left/update",10);
-  pub_robot_state_[_LEFT] = nh_.advertise<std_msgs::String>("/dvrk/MTML/set_robot_state",10);
-  pub_robot_state_[_RIGHT] = nh_.advertise<std_msgs::String>("/dvrk/MTMR/set_robot_state",10);
+  publisher_rhcursor_ = nh_.advertise<interaction_cursor_msgs::InteractionCursorUpdate>("rvinci_cursor_right/update",10);
+  publisher_lhcursor_ = nh_.advertise<interaction_cursor_msgs::InteractionCursorUpdate>("rvinci_cursor_left/update",10);
+  // pub_robot_state_[_LEFT] = nh_.advertise<std_msgs::String>("/dvrk/MTML/set_robot_state",10);
+  // pub_robot_state_[_RIGHT] = nh_.advertise<std_msgs::String>("/dvrk/MTMR/set_robot_state",10);
   
   publisher_markers = nh_.advertise<visualization_msgs::MarkerArray>("rvinci_markers", 10);
   publisher_rvinci_ = nh_.advertise<rvinci_input_msg::rvinci_input>("/rvinci_input_update",10);
@@ -339,8 +330,8 @@ void rvinciDisplay::gravityCompensation()
     msg.data = "DVRK_READY";
   }
 
-  pub_robot_state_[_LEFT].publish(msg);
-  pub_robot_state_[_RIGHT].publish(msg);
+  // pub_robot_state_[_LEFT].publish(msg);
+  // pub_robot_state_[_RIGHT].publish(msg);
 }
 
 void rvinciDisplay::inputCallback(const rvinci_input_msg::rvinci_input::ConstPtr& r_input)
@@ -637,6 +628,14 @@ visualization_msgs::Marker rvinciDisplay::deleteMarker(int id)
   return marker;
 }
 
+bool rvinciDisplay::isMTM(bool left_grab, bool right_grab, bool coag_mode){
+  if (left_grab && right_grab && !coag_mode)
+  {
+    return true;
+  }
+  return false;
+}
+
 void rvinciDisplay::publishMeasurementMarkers()
 {
   visualization_msgs::MarkerArray marker_arr;
@@ -649,13 +648,23 @@ void rvinciDisplay::publishMeasurementMarkers()
   distance_pose.orientation.x = distance_pose.orientation.y = distance_pose.orientation.z = 0.0;
   distance_pose.orientation.w = 1.0;
 
+  if(isMTM(left_grab_, right_grab_, coag_mode_))
+  {
+    MTM_mm_ = true;
+    // ROS_INFO_STREAM("1 ----------> _BEGIN");
+  }
+  else
+  {
+    // ROS_INFO_STREAM("####################");
+    MTM_mm_ = false; 
+  }
+
   if (MTM_mm_) {  // MTM measurement
-    // ROS_INFO_STREAM("\n************** MTM measurement **************\n");
-    marker_arr.markers.push_back( makeTextMessage(text_pose, "MTM MEASUREMENT", _STATUS_TEXT) );
+    ROS_INFO_STREAM("\n************** MTM measurement **************\n");
+    marker_arr.markers.push_back( makeTextMessage(text_pose, "MTM...", _STATUS_TEXT) );
     switch (measurement_status_MTM)
     {
       case _BEGIN:
-        // ROS_INFO_STREAM("BEGINNING");
         marker_arr.markers.push_back( makeTextMessage(text_pose, "Beginning", _STATUS_TEXT) );
         if (flag_delete_marker_)
         {
@@ -691,8 +700,8 @@ void rvinciDisplay::publishMeasurementMarkers()
   } 
   // TODO: PSM measurement
   // To measure PSM, both left and right grippers should be closed and footpedal should be pressed
-  else if (PSM_mm_){  // PSM measurement
-    // ROS_INFO_STREAM("\n&&&&&&&&&&&&&& PSM measurement &&&&&&&&&&&&&&\n");
+  else {  // PSM measurement
+    ROS_INFO_STREAM("\n************** PSM measurement **************\n");
     switch(measurement_status_PSM_)
     {
       case _BEGIN:
@@ -746,14 +755,6 @@ void rvinciDisplay::publishMeasurementMarkers()
     //     break;
     // }
   }
-  else
-  {
-    ROS_INFO_STREAM("No measurement mode selected");
-  }
-  // else
-  // {
-  //   ROS_INFO_STREAM("No measurement mode selected");
-  // }
 
   // PSM marker location test
   // marker_arr.markers.push_back( makeMarker(PSM_pose_start_, _START_POINT) );
@@ -762,110 +763,39 @@ void rvinciDisplay::publishMeasurementMarkers()
   publisher_markers.publish(marker_arr);
 }
 
-void rvinciDisplay::updateCursorVisibility(const interaction_cursor_msgs::InteractionCursorUpdate& msg)
+
+void rvinciDisplay::setCursorVisibility(bool visible)
 {
-    // Update the "Show Cursor" property based on the received message
-    ROS_INFO_STREAM("Show Cursor: " << msg.show);
-    if (msg.show)
-    {
-        this->setProperty("Show Cursor", true);
-    }
-    else
-    {
-        this->setProperty("Show Cursor", false);
-    }
+  interaction_cursor_msgs::InteractionCursorUpdate lhcursor;
+  interaction_cursor_msgs::InteractionCursorUpdate rhcursor;
+
+  lhcursor.pose.header.frame_id = context_->getFixedFrame().toStdString();
+  lhcursor.pose.header.stamp = ros::Time::now();
+  lhcursor.show = visible;  // Set visibility
+  publisher_lhcursor_.publish(lhcursor);
+
+  rhcursor.pose.header.frame_id = context_->getFixedFrame().toStdString();
+  rhcursor.pose.header.stamp = ros::Time::now();
+  rhcursor.show = visible;  // Set visibility
+  publisher_rhcursor_.publish(rhcursor);
 }
 
 
 void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg) 
 {
-    // buttons: 0 - released, 1 - pressed, 2 - quick tap
-    clutch_mode_ = msg->buttons[0];
-    ROS_INFO_STREAM("Clutch mode: " << clutch_mode_);
+  // buttons: 0 - released, 1 - pressed, 2 - quick tap
+  rvmsg_.clutch = msg->buttons[0];
 
-    if (clutch_mode_ == 2) {
-      ROS_INFO_STREAM("Clutch quick tap detected");
-      clutch_quick_tap_ = true;
-
-      if (clutch_quick_tap_)
-      {
-        // Create the InteractionCursorUpdate message to update cursor state
-        interaction_cursor_msgs::InteractionCursorUpdate cursor_msg;
-
-        // Toggle the visibility of the cursor
-        cursor_visible_ = !cursor_visible_;
-        cursor_msg.show = cursor_visible_;  // Toggle visibility
-
-        // Set the pose of the cursor (this could be dynamically set based on your system's logic)
-        cursor_msg.pose.header.frame_id = context_->getFixedFrame().toStdString();
-        cursor_msg.pose.header.stamp = ros::Time::now();
-        cursor_msg.pose.pose.position.x = 0.0; 
-        cursor_msg.pose.pose.position.y = 0.0;
-        cursor_msg.pose.pose.position.z = 0.0;
-
-        // Required fields for button state and key event, adjust as necessary
-        cursor_msg.button_state = interaction_cursor_msgs::InteractionCursorUpdate::NONE;  // No buttons pressed
-        cursor_msg.key_event = interaction_cursor_msgs::InteractionCursorUpdate::NONE;  // No key event
-
-        visualization_msgs::Marker marker;
-        marker.header.frame_id = context_->getFixedFrame().toStdString();
-        marker.header.stamp = ros::Time::now();
-        marker.type = visualization_msgs::Marker::SPHERE;
-        marker.scale.x = 0.05;
-        marker.scale.y = 0.05;
-        marker.scale.z = 0.05;
-        marker.color.r = 0.0;
-        marker.color.g = 1.0;
-        marker.color.b = 0.0;
-        marker.color.a = 1.0;
-        cursor_msg.markers.push_back(marker);  // Add the marker to the message
-
-        ROS_INFO_STREAM("Clutch quick tap detected");
-
-        // Call the updateCursorVisibility function to process the message
-        updateCursorVisibility(cursor_msg);
-      }
-    }
-    else if (clutch_mode_ == 1)
-    {
-        if (clutch_press_start_time_.isZero())  // If this is the first press, start timing
-        {
-            clutch_press_start_time_ = ros::Time::now();
-        }
-        else
-        {
-            // Check if the clutch has been held for more than 3 seconds
-            if ((ros::Time::now() - clutch_press_start_time_).toSec() > 3.0)
-            { 
-              flag_delete_marker_ = true;
-              ROS_INFO_STREAM("!!!!!!Delete markers!!!!!!!!");
-              clutch_press_start_time_ = ros::Time();  // Reset the timing
-            }
-        }
-    }
-    else  // Clutch released
-    {
-      clutch_quick_tap_ = false;
-      clutch_press_start_time_ = ros::Time();  // Reset the timing
-    }
-}
-
-void rvinciDisplay::teleopCallback(const std_msgs::Bool::ConstPtr& msg)
-{
-    teleop_mode_ = msg->data;
-
-    if (teleop_mode_)
-    {
-      // ROS_INFO_STREAM("Teleop enabled: PSM mode activated.");
-      PSM_mm_ = true;
-      MTM_mm_ = false;
-    }
-    else if (!teleop_mode_)
-    {
-      // ROS_INFO_STREAM("Teleop disabled: MTM mode activated.");
-      PSM_mm_ = false;
-      MTM_mm_ = true;
-    }
+  if (msg->buttons[0] == 1) // When the clutch pedal is pressed
+  {
+    // Enable the cursor display
+    setCursorVisibility(true);
+  }
+  else if (msg->buttons[0] == 0) // When the clutch pedal is released
+  {
+    // Disable the cursor display
+    setCursorVisibility(false);
+  }
 }
 
 void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg) 

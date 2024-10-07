@@ -8,11 +8,14 @@ from geometry_msgs.msg import PoseStamped
 
 class DVRKInteractiveMarker:
     def __init__(self):
+        # Initialize the ROS node
+        rospy.init_node('dvrk_interactive_marker')
+
         # CRTK interfaces for both MTML and MTMR
-        self.ral_mtml = crtk.ral('dvrk_interactive_marker')
+        self.ral_mtml = crtk.ral('mtml')
         self.arm_mtml = dvrk.arm(self.ral_mtml, 'MTML')
 
-        self.ral_mtmr = crtk.ral('dvrk_interactive_marker')
+        self.ral_mtmr = crtk.ral('mtmr')
         self.arm_mtmr = dvrk.arm(self.ral_mtmr, 'MTMR')
 
         # Subscriber to the clutch pedal
@@ -59,13 +62,13 @@ class DVRKInteractiveMarker:
         """Add an interactive marker at the current pose."""
         # Create an interactive marker
         int_marker = InteractiveMarker()
-        int_marker.header.frame_id = pose_stamped.header.frame_id  # Make sure this is set correctly
+        int_marker.header.frame_id = pose_stamped.header.frame_id
         int_marker.name = marker_name
         int_marker.description = description
         int_marker.scale = 0.1
 
         # Set the pose of the interactive marker
-        int_marker.pose = pose_stamped.pose  # Ensure this pose is compatible with PoseStamped
+        int_marker.pose = pose_stamped.pose
 
         # Create a control for moving the marker
         control = InteractiveMarkerControl()
@@ -74,7 +77,7 @@ class DVRKInteractiveMarker:
 
         # Create a basic marker (sphere)
         marker = Marker()
-        marker.type = Marker.CUBE
+        marker.type = Marker.SPHERE
         marker.scale.x = 0.05
         marker.scale.y = 0.05
         marker.scale.z = 0.05
