@@ -363,10 +363,6 @@ void rvinciDisplay::cameraReset()
     camera_[i]->setFixedYawAxis(true, camera_node_->getOrientation() * Ogre::Vector3::UNIT_Z);
     camera_[i]->setPosition(camera_offset_ - camera_ipd_ + 2*i*camera_ipd_);
     camera_[i]->lookAt(camera_node_->getPosition());
-<<<<<<< HEAD
-=======
-
->>>>>>> parent of 03b1f39 (fixed ros_info_stream)
     cursor_[i].position.x = (2*i - 1)*0.6;
     cursor_[i].position.y = 0;
     cursor_[i].position.z = 0;
@@ -705,7 +701,7 @@ void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg)
     else if (clutch_mode_ == 1)
     {
       ROS_INFO_STREAM("Clutch pressed");
-      if (clutch_press_start_time_ == 0.0)  // If this is the first press, start timing
+      if (clutch_press_start_time_.isZERO())  // If this is the first press, start timing
       {
         ROS_INFO_STREAM("Clutch pressed for the first time");
         clutch_press_start_time_ = ros::Time::now();
