@@ -171,6 +171,8 @@ protected Q_SLOTS:
   virtual void cameraReset();
   //!Sets up ROS subscribers and publishers
   virtual void pubsubSetup();
+  //!Toggle for DVRK Gravity Compensation state
+  virtual void gravityCompensation();
 
 private:
   //!Creates viewports and cameras.
@@ -194,6 +196,11 @@ private:
   //!Publishes cursor position and grip state to interaction cursor 3D display type.
   void publishCursorUpdate(int grab[2]);
   void updateCursorVisibility(const interaction_cursor_msgs::InteractionCursorUpdate& msg);
+  //!Logic for grip state, used in interaction cursor 3D display type.
+  int getaGrip(bool, int);
+  //publish wrench 0 and gravity compensation
+  void publishGravity();
+  void publishWrench();
 
   //visualization
   visualization_msgs::Marker makeMarker(geometry_msgs::Pose p, int id);
@@ -204,6 +211,7 @@ private:
   //measurement
   double calculateDistance(geometry_msgs::Pose p1, geometry_msgs::Pose p2);
   void publishMeasurementMarkers();
+  bool isMTM(bool left_grab, bool right_grab, bool coag_mode);
 
   enum MeasurementApp {_BEGIN, _START_MEASUREMENT, _MOVING, _END_MEASUREMENT};
   enum MarkerID {_STATUS_TEXT, _START_POINT, _END_POINT, _LINE, _DISTANCE_TEXT, _DELETE};
@@ -224,11 +232,18 @@ private:
   bool camera_quick_tap_;
   bool clutch_quick_tap_;
   bool flag_delete_marker_;
+  bool left_released_;
+  bool right_released_;
+  bool cursor_visible_;
+  bool camera_quick_tap_;
+  bool clutch_quick_tap_;
   bool show_axes_right_;
   bool show_cursor_right_;
   bool show_axes_left_;
   bool show_cursor_left_;  
   bool start_measurement_PSM_[2];
+  bool single_psm_mode_;
+  bool first_point_set_;
 
   int marker_side_;
   MeasurementApp measurement_status_MTM;
@@ -262,6 +277,9 @@ private:
   Ogre::Vector3 input_pos_[2];
   Ogre::Vector3 input_change_[2];
 
+  ros::Time left_grip_timestamp_;
+  ros::Time right_grip_timestamp_;
+  ros::Time clutch_press_start_time_;
   ros::NodeHandle nh_;
   ros::Subscriber subscriber_input_;
   ros::Subscriber subscriber_lcam_;
@@ -303,6 +321,7 @@ private:
   geometry_msgs::Pose measurement_end_;
   geometry_msgs::Pose PSM_pose_start_;
   geometry_msgs::Pose PSM_pose_end_;
+
 
   rviz::FrameManager frame_manager_;
   std_msgs::Header cam_header_;
