@@ -637,7 +637,7 @@ void rvinciDisplay::publishMeasurementMarkers()
 void rvinciDisplay::updateCursorVisibility(const interaction_cursor_msgs::InteractionCursorUpdate& msg)
 {
     // Update the "Show Cursor" property based on the received message
-    ROS_INFO_STREAM("Show Cursor: " << msg.show);
+    ROS::INFO_STREAM("Show Cursor: " << msg.show);
     if (msg.show)
     {
         this->setProperty("Show Cursor", true);
@@ -692,7 +692,7 @@ void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg)
         marker.color.a = 1.0;
         cursor_msg.markers.push_back(marker);  // Add the marker to the message
 
-        ROS_INFO_STREAM("Clutch quick tap detected");
+        ROS::INFO_STREAM("Clutch quick tap detected");
 
         // Call the updateCursorVisibility function to process the message
         updateCursorVisibility(cursor_msg);
@@ -720,9 +720,12 @@ void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg)
     }
     else  // Clutch released
     {
-      clutch_quick_tap_ = false;
       clutch_press_start_time_ = ros::Time();  // Reset the timing
     }
+
+    else clutch_quick_tap_ = false;
+
+
 }
 
 void rvinciDisplay::teleopCallback(const std_msgs::Bool::ConstPtr& msg)
