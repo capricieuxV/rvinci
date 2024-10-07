@@ -692,46 +692,6 @@ bool rvinciDisplay::isMTM(bool left_grab, bool right_grab, bool coag_mode)
 
 
 
-
-  // if(isMTM(left_grab_, right_grab_, coag_mode_))
-  // {
-  //   MTM_mm_ = true;
-  //   // ROS_INFO_STREAM("1 ----------> _BEGIN");
-  // }
-  // else
-  // {
-  //   // ROS_INFO_STREAM("####################");
-  //   MTM_mm_ = false; 
-  // }
-
-  
-  // // TODO: PSM measurement
-  // // To measure PSM, both left and right grippers should be closed and footpedal should be pressed
-  // else {  // PSM measurement
-  //   // ROS_INFO_STREAM("\n************** PSM measurement **************\n");
-  //   switch(measurement_status_PSM_)
-  //   {
-  //     case _BEGIN:
-  //       marker_arr.markers.push_back( deleteMarker(_DELETE) );
-  //       break;
-  //     case _START_MEASUREMENT:
-  //       ROS_INFO_STREAM("PSM start: "<<PSM_pose_start_.position.x<<" "<<PSM_pose_start_.position.y<<" "<<PSM_pose_start_.position.z);
-  //       ROS_INFO_STREAM("PSM end: "<<PSM_pose_end_.position.x<<" "<<PSM_pose_end_.position.y<<" "<<PSM_pose_end_.position.z);
-  //       ROS_INFO_STREAM(calculateDistance(PSM_pose_start_, PSM_pose_end_));
-  //       marker_arr.markers.push_back( makeTextMessage(text_pose, "start measurement", _STATUS_TEXT) );
-  //       marker_arr.markers.push_back( makeTextMessage(distance_pose, 
-  //         std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000)+" mm", _DISTANCE_TEXT) );
-  //       break;
-  //     case _END_MEASUREMENT:
-  //       marker_arr.markers.push_back( makeTextMessage(text_pose, "end measurement", _STATUS_TEXT) );
-  //       marker_arr.markers.push_back( makeTextMessage(distance_pose, 
-  //         std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000)+" mm", _DISTANCE_TEXT) );
-  //       break;
-  //   }
-  // }
-
-
-
 void rvinciDisplay::publishMeasurementMarkers()
 {
   visualization_msgs::MarkerArray marker_arr;
@@ -744,44 +704,24 @@ void rvinciDisplay::publishMeasurementMarkers()
   distance_pose.orientation.x = distance_pose.orientation.y = distance_pose.orientation.z = 0.0;
   distance_pose.orientation.w = 1.0;
 
-  // if teleop is on, enter PSM mode
-  if (teleop_mode_){
-    if (left_released_ == 0 && right_released_ == 0){
-      ROS_INFO_STREAM("\n double PSM mode");
-      switch (measurement_status_PSM_) {
-        case _BEGIN:
-          marker_arr.markers.push_back(deleteMarker(_DELETE));
-          break;
-        case _START_MEASUREMENT:
-          ROS_INFO_STREAM("PSM start: "<<PSM_pose_start_.position.x<<" "<<PSM_pose_start_.position.y<<" "<<PSM_pose_start_.position.z);
-          ROS_INFO_STREAM("PSM end: "<<PSM_pose_end_.position.x<<" "<<PSM_pose_end_.position.y<<" "<<PSM_pose_end_.position.z);
-          ROS_INFO_STREAM(calculateDistance(PSM_pose_start_, PSM_pose_end_));
-          marker_arr.markers.push_back( makeTextMessage(text_pose, "start measurement", _STATUS_TEXT) );
-          marker_arr.markers.push_back( makeTextMessage(distance_pose, 
-            std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000 )+" mm", _DISTANCE_TEXT) );
-          break;
-        case _END_MEASUREMENT:
-          marker_arr.markers.push_back(makeTextMessage(text_pose, "End measurement", _STATUS_TEXT));
-          marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(PSM_pose_start_, PSM_pose_end_) * 1000) + " mm", _DISTANCE_TEXT));
-          break;
+  if(isMTM(left_released_, right_released_, coag_mode_))
+    {
+      MTM_mm_ = true;
+      // ROS_INFO_STREAM("1 ----------> _BEGIN");
     }
+  else
+    {
+      // ROS_INFO_STREAM("####################");
+      MTM_mm_ = false; 
     }
-    else if (left_released_ == 1 && right_released_ == 1){
-      ROS_INFO_STREAM("\n both gripper released");
 
-    }
-    else {
-      ROS_INFO_STREAM("\n single PSM mode");
-      measurement_status_PSM_ == _BEGIN;
-    }
-  }
-  // if teleop is off, enter MTM mode
-  else{
+  if (MTM_mm_) {  // MTM measurement
     ROS_INFO_STREAM("\n************** MTM measurement **************\n");
-    marker_arr.markers.push_back( makeTextMessage(text_pose, "MTM...", _STATUS_TEXT) );
+    marker_arr.markers.push_back( makeTextMessage(text_pose, "MTM MEASUREMENT", _STATUS_TEXT) );
     switch (measurement_status_MTM)
     {
       case _BEGIN:
+        ROS_INFO_STREAM("BEGINNING");
         marker_arr.markers.push_back( makeTextMessage(text_pose, "Beginning", _STATUS_TEXT) );
         marker_arr.markers.push_back( deleteMarker(_DELETE) );
         break;
@@ -810,9 +750,49 @@ void rvinciDisplay::publishMeasurementMarkers()
         marker_arr.markers.push_back( makeLineMarker(measurement_start_.position, measurement_end_.position, _LINE) );
         break;
     }
+  } 
+  // TODO: PSM measurement
+  // To measure PSM, both left and right grippers should be closed and footpedal should be pressed
+  else {
+    if (left_released_ == 0 && right_released_ == 0){
+      ROS_INFO_STREAM("\n double PSM mode");
+    }
+    else if (left_released_ == 1 && right_released_ == 1){
+      ROS_INFO_STREAM("\n both gripper released");
+    }
+    else {
+      ROS_INFO_STREAM("\n single PSM mode");
+      measurement_status_PSM_ == _BEGIN;
+    }
   }
+  // else if (PSM_mm_){  // PSM measurement
+  //   ROS_INFO_STREAM("\n&&&&&&&&&&&&&& PSM measurement &&&&&&&&&&&&&&\n");
+  //   switch(measurement_status_PSM_)
+  //   {
+  //     case _BEGIN:
+  //       marker_arr.markers.push_back( deleteMarker(_DELETE) );
+  //       break;
+  //     case _START_MEASUREMENT:
+  //       ROS_INFO_STREAM("PSM start: "<<PSM_pose_start_.position.x<<" "<<PSM_pose_start_.position.y<<" "<<PSM_pose_start_.position.z);
+  //       ROS_INFO_STREAM("PSM end: "<<PSM_pose_end_.position.x<<" "<<PSM_pose_end_.position.y<<" "<<PSM_pose_end_.position.z);
+  //       ROS_INFO_STREAM(calculateDistance(PSM_pose_start_, PSM_pose_end_));
+  //       marker_arr.markers.push_back( makeTextMessage(text_pose, "start measurement", _STATUS_TEXT) );
+  //       marker_arr.markers.push_back( makeTextMessage(distance_pose, 
+  //         std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000)+" mm", _DISTANCE_TEXT) );
+  //       break;
+  //     case _END_MEASUREMENT:
+  //       marker_arr.markers.push_back( makeTextMessage(text_pose, "end measurement", _STATUS_TEXT) );
+  //       marker_arr.markers.push_back( makeTextMessage(distance_pose, 
+  //         std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000)+" mm", _DISTANCE_TEXT) );
+  //       break;
+  //   }
+  // }
 
-  
+
+  // PSM marker location test
+  // marker_arr.markers.push_back( makeMarker(PSM_pose_start_, _START_POINT) );
+  // marker_arr.markers.push_back( makeMarker(PSM_pose_end_, _END_POINT) );
+
   publisher_markers.publish(marker_arr);
 }
   
