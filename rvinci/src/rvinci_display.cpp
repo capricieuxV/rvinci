@@ -152,6 +152,7 @@ void rvinciDisplay::onInitialize()
   show_axes_left_ = true;
   show_cursor_left_ = false;  Mono_mode_ = false;
   coag_init_ = true;
+  clutch_press_start_time_ = 0.0;
 
   measurement_status_MTM = _BEGIN;
   measurement_status_PSM_ = _BEGIN;
@@ -554,12 +555,12 @@ void rvinciDisplay::publishMeasurementMarkers()
   distance_pose.orientation.w = 1.0;
 
   if (MTM_mm_) {  // MTM measurement
-    ROS_INFO_STREAM("\n************** MTM measurement **************\n");
+    // ROS_INFO_STREAM("\n************** MTM measurement **************\n");
     marker_arr.markers.push_back( makeTextMessage(text_pose, "MTM MEASUREMENT", _STATUS_TEXT) );
     switch (measurement_status_MTM)
     {
       case _BEGIN:
-        ROS_INFO_STREAM("BEGINNING");
+        // ROS_INFO_STREAM("BEGINNING");
         marker_arr.markers.push_back( makeTextMessage(text_pose, "Beginning", _STATUS_TEXT) );
         if (flag_delete_marker_)
         {
@@ -568,7 +569,7 @@ void rvinciDisplay::publishMeasurementMarkers()
         }
         break;
       case _START_MEASUREMENT:
-        ROS_INFO_STREAM("USING" << marker_side_ << "GRIPPER");
+        // ROS_INFO_STREAM("USING" << marker_side_ << "GRIPPER");
         marker_arr.markers.push_back( makeTextMessage(text_pose, "Start measurement", _STATUS_TEXT) );
         marker_arr.markers.push_back( makeMarker(cursor_[marker_side_], _START_POINT) );
         measurement_start_ = cursor_[marker_side_];
@@ -579,7 +580,7 @@ void rvinciDisplay::publishMeasurementMarkers()
         std::to_string(calculateDistance(measurement_start_, cursor_[marker_side_])*10)+" mm", _DISTANCE_TEXT) );
         marker_arr.markers.push_back( makeMarker(measurement_start_, _START_POINT) );
         marker_arr.markers.push_back( makeMarker(cursor_[marker_side_], _END_POINT) );
-        ROS_INFO_STREAM("marker_side : "<< marker_side_);
+        // ROS_INFO_STREAM("marker_side : "<< marker_side_);
         marker_arr.markers.push_back( makeLineMarker(measurement_start_.position, cursor_[marker_side_].position, _LINE) );
         measurement_end_ = cursor_[marker_side_];
         break;
@@ -596,7 +597,7 @@ void rvinciDisplay::publishMeasurementMarkers()
   // TODO: PSM measurement
   // To measure PSM, both left and right grippers should be closed and footpedal should be pressed
   else if (PSM_mm_){  // PSM measurement
-    ROS_INFO_STREAM("\n&&&&&&&&&&&&&& PSM measurement &&&&&&&&&&&&&&\n");
+    // ROS_INFO_STREAM("\n&&&&&&&&&&&&&& PSM measurement &&&&&&&&&&&&&&\n");
     switch(measurement_status_PSM_)
     {
       case _BEGIN:
@@ -700,9 +701,10 @@ void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg)
     else if (clutch_mode_ == 1)
     {
       ROS_INFO_STREAM("Clutch pressed");
-      if (clutch_press_start_time_.isZero())  // If this is the first press, start timing
+      if (clutch_press_start_time_ == 0.0)  // If this is the first press, start timing
       {
-          clutch_press_start_time_ = ros::Time::now();
+        ROS_INFO_STREAM("Clutch pressed for the first time");
+        clutch_press_start_time_ = ros::Time::now();
       }
       else
       {   
@@ -729,13 +731,13 @@ void rvinciDisplay::teleopCallback(const std_msgs::Bool::ConstPtr& msg)
 
     if (teleop_mode_)
     {
-      ROS_INFO_STREAM("PSM measurement mode");
+      // ROS_INFO_STREAM("PSM measurement mode");
       PSM_mm_ = true;
       MTM_mm_ = false;
     }
     else if (!teleop_mode_)
     {
-      ROS_INFO_STREAM("MTM measurement mode");
+      // ROS_INFO_STREAM("MTM measurement mode");
       PSM_mm_ = false;
       MTM_mm_ = true;
     }
