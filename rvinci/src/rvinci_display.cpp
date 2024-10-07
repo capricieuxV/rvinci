@@ -700,21 +700,19 @@ void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg)
     }
     else if (clutch_mode_ == 1)
     {
-      ROS_INFO_STREAM("Clutch pressed");
-      if (clutch_press_start_time_.isZERO())  // If this is the first press, start timing
-      {
-        ROS_INFO_STREAM("Clutch pressed for the first time");
-        clutch_press_start_time_ = ros::Time::now();
-      }
-      else
-      {   
-        ROS_INFO_STREAM("Clutch held for: " << (ros::Time::now() - clutch_press_start_time_).toSec() << " seconds");
-        // Check if the clutch has been held for more than 3 seconds
-        if ((ros::Time::now() - clutch_press_start_time_).toSec() > 3.0)
-        { 
-          flag_delete_marker_ = true;
-          ROS_INFO_STREAM("!!!!!!Delete markers!!!!!!!!");
-          clutch_press_start_time_ = ros::Time();  // Reset the timing
+        if (clutch_press_start_time_.isZero())  // If this is the first press, start timing
+        {
+            clutch_press_start_time_ = ros::Time::now();
+        }
+        else
+        {
+            // Check if the clutch has been held for more than 3 seconds
+            if ((ros::Time::now() - clutch_press_start_time_).toSec() > 3.0)
+            { 
+              flag_delete_marker_ = true;
+              ROS::INFO_STREAM("!!!!!!Delete markers!!!!!!!!");
+              clutch_press_start_time_ = ros::Time();  // Reset the timing
+            }
         }
       }
     }
