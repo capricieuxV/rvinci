@@ -243,6 +243,8 @@ private:
   bool start_measurement_PSM_[2];
   bool single_psm_mode_;
   bool first_point_set_;
+  bool flag_delete_marker_;
+  
   
 
   int marker_side_;
@@ -279,6 +281,7 @@ private:
 
   ros::Time left_grip_timestamp_;
   ros::Time right_grip_timestamp_;
+  ros::Time clutch_press_start_time_;
   ros::NodeHandle nh_;
   ros::Subscriber subscriber_input_;
   ros::Subscriber subscriber_lcam_;
