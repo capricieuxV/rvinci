@@ -213,6 +213,7 @@ void rvinciDisplay::pubsubSetup()
 
   publisher_markers = nh_.advertise<visualization_msgs::MarkerArray>("rvinci_markers", 10);
   publisher_rvinci_ = nh_.advertise<rvinci_input_msg::rvinci_input>("/rvinci_input_update",10);
+}
 
 void rvinciDisplay::leftCallback(const sensor_msgs::ImageConstPtr& img){
 
@@ -364,7 +365,7 @@ void rvinciDisplay::cameraReset()
     camera_[i]->setFarClipDistance(100.0f);
     camera_[i]->setFixedYawAxis(true, camera_node_->getOrientation() * Ogre::Vector3::UNIT_Z);
     camera_[i]->setPosition(camera_offset_ - camera_ipd_ + 2*i*camera_ipd_);
-    camera_[i]->lookAt(camera_node_->getPosition())
+    camera_[i]->lookAt(camera_node_->getPosition());
     cursor_[i].position.x = (2*i - 1)*0.6;
     cursor_[i].position.y = 0;
     cursor_[i].position.z = 0;
