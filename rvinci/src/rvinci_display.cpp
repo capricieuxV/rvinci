@@ -169,6 +169,8 @@ void rvinciDisplay::onInitialize()
   show_cursor_left_ = false;  Mono_mode_ = false;
   coag_init_ = true;
   flag_delete_marker_ = false;
+  PSM_initial_position_set_[_LEFT] = false;
+  PSM_initial_position_set_[_RIGHT] = false;
 
   measurement_status_MTM = _BEGIN;
   measurement_status_PSM_ = _BEGIN;
@@ -987,14 +989,24 @@ void rvinciDisplay::PSMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg,
             switch (i)
             {
                 case _LEFT: 
-                    PSM_pose_start_ = msg->pose;
-                    PSM_pose_start_.position.x -= 0.000154096;
-                    PSM_pose_start_.position.y -= 0.000118207;
+                    // Calculate the relative position for the left gripper based on its initial position
+                    if (!PSM_initial_position_set_[_LEFT])
+                    {
+                        PSM_initial_pose_[_LEFT] = msg->pose;
+                        PSM_initial_position_set_[_LEFT] = true;
+                    }
+                    PSM_pose_start_.position.x = msg->pose.position.x - PSM_initial_pose_[_LEFT].position.x;
+                    PSM_pose_start_.position.y = msg->pose.position.y - PSM_initial_pose_[_LEFT].position.y;
                     break;
                 case _RIGHT: 
-                    PSM_pose_end_ = msg->pose;
-                    PSM_pose_end_.position.x -= 0.000154096;
-                    PSM_pose_end_.position.y -= 0.000118207;
+                    // Calculate the relative position for the right gripper based on its initial position
+                    if (!PSM_initial_position_set_[_RIGHT])
+                    {
+                        PSM_initial_pose_[_RIGHT] = msg->pose;
+                        PSM_initial_position_set_[_RIGHT] = true;
+                    }
+                    PSM_pose_end_.position.x = msg->pose.position.x - PSM_initial_pose_[_RIGHT].position.x;
+                    PSM_pose_end_.position.y = msg->pose.position.y - PSM_initial_pose_[_RIGHT].position.y;
                     break;
             }
         }
@@ -1006,15 +1018,25 @@ void rvinciDisplay::PSMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg,
         {
             if (i == _LEFT && start_measurement_PSM_[_LEFT])  // Only update if the left gripper is gripping
             {
-                PSM_pose_start_ = msg->pose;
-                PSM_pose_start_.position.x -= 0.000154096;
-                PSM_pose_start_.position.y -= 0.000118207;
+                // Calculate the relative position for the left gripper based on its initial position
+                if (!PSM_initial_position_set_[_LEFT])
+                {
+                    PSM_initial_pose_[_LEFT] = msg->pose;
+                    PSM_initial_position_set_[_LEFT] = true;
+                }
+                PSM_pose_start_.position.x = msg->pose.position.x - PSM_initial_pose_[_LEFT].position.x;
+                PSM_pose_start_.position.y = msg->pose.position.y - PSM_initial_pose_[_LEFT].position.y;
             }
             else if (i == _RIGHT && start_measurement_PSM_[_RIGHT])  // Only update if the right gripper is gripping
             {
-                PSM_pose_end_ = msg->pose;
-                PSM_pose_end_.position.x -= 0.000154096;
-                PSM_pose_end_.position.y -= 0.000118207;
+                // Calculate the relative position for the right gripper based on its initial position
+                if (!PSM_initial_position_set_[_RIGHT])
+                {
+                    PSM_initial_pose_[_RIGHT] = msg->pose;
+                    PSM_initial_position_set_[_RIGHT] = true;
+                }
+                PSM_pose_end_.position.x = msg->pose.position.x - PSM_initial_pose_[_RIGHT].position.x;
+                PSM_pose_end_.position.y = msg->pose.position.y - PSM_initial_pose_[_RIGHT].position.y;
             }
         }
     }
