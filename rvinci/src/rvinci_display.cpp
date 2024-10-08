@@ -797,19 +797,7 @@ void rvinciDisplay::updateCursorVisibility(const interaction_cursor_msgs::Intera
 void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg) 
 {
     // buttons: 0 - released, 1 - pressed, 2 - quick tap
-    clutch_mode_ = msg->buttons[0];
-
-    if (msg->buttons[0] == 2) {
-      clutch_quick_tap_ = true;
-
-      if (clutch_quick_tap_)
-      {
-        ROS_INFO_STREAM("Clutch quick tap, deleting markers");
-        flag_delete_marker_ = true;
-      }
-    }
-    else clutch_quick_tap_ = false;
-
+    rvmsg_.clutch = msg->buttons[0];
 }
 
 void rvinciDisplay::teleopCallback(const std_msgs::Bool::ConstPtr& msg)
