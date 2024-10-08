@@ -166,6 +166,7 @@ void rvinciDisplay::onInitialize()
   show_axes_left_ = true;
   show_cursor_left_ = false;  Mono_mode_ = false;
   coag_init_ = true;
+  flag_delete_marker_ = false;
 
   measurement_status_MTM = _BEGIN;
   measurement_status_PSM_ = _BEGIN;
@@ -704,7 +705,12 @@ void rvinciDisplay::publishMeasurementMarkers()
       case _BEGIN:
         // ROS_INFO_STREAM("BEGINNING");
         marker_arr.markers.push_back( makeTextMessage(text_pose, "Beginning", _STATUS_TEXT) );
-        marker_arr.markers.push_back( deleteMarker(_DELETE) );
+        // marker_arr.markers.push_back( deleteMarker(_DELETE) );
+        if flag_delete_marker_
+        {
+          marker_arr.markers.push_back( deleteMarker(_DELETE) );
+          flag_delete_marker_ = false;
+        }
         break;
       case _START_MEASUREMENT:
         // ROS_INFO_STREAM("USING" << marker_side_ << "GRIPPER");
@@ -739,7 +745,12 @@ void rvinciDisplay::publishMeasurementMarkers()
     switch(measurement_status_PSM_)
     {
       case _BEGIN:
-        marker_arr.markers.push_back( deleteMarker(_DELETE) );
+        if flag_delete_marker_
+        {
+          marker_arr.markers.push_back( deleteMarker(_DELETE) );
+          flag_delete_marker_ = false;
+        }
+        // marker_arr.markers.push_back( deleteMarker(_DELETE) );
         break;
       case _START_MEASUREMENT:
         // ROS_INFO_STREAM("PSM start: "<<PSM_pose_start_.position.x<<" "<<PSM_pose_start_.position.y<<" "<<PSM_pose_start_.position.z);
@@ -851,27 +862,25 @@ void rvinciDisplay::teleopCallback(const std_msgs::Bool::ConstPtr& msg)
     }
 }
 
-void rvinciDisplay::clearAllMarkersExceptCurrent()
-{
-    visualization_msgs::MarkerArray marker_arr;
+// void rvinciDisplay::clearAllMarkersExceptCurrent()
+// {
+//     visualization_msgs::MarkerArray marker_arr;
 
-    // Create a delete all markers command except for the current marker
-    visualization_msgs::Marker delete_all;
-    delete_all.action = visualization_msgs::Marker::DELETEALL;
-    marker_arr.markers.push_back(delete_all);
+//     // Create a delete all markers command except for the current marker
+//     visualization_msgs::Marker delete_all;
+//     delete_all.action = visualization_msgs::Marker::DELETEALL;
+//     marker_arr.markers.push_back(delete_all);
 
-    // Ensure the current marker remains on the screen
-    marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
-    marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
-    marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, _LINE));
+//     // Ensure the current marker remains on the screen
+//     marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
+//     marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
+//     marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, _LINE));
 
-    // Publish the marker array
-    publisher_markers.publish(marker_arr);
+//     // Publish the marker array
+//     publisher_markers.publish(marker_arr);
 
-    ROS_INFO_STREAM("Cleared all markers except for the current marker.");
-}
-
-
+//     ROS_INFO_STREAM("Cleared all markers except for the current marker.");
+// }
 
 void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg) 
 {
@@ -883,7 +892,7 @@ void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg)
     {
         ros::Time current_time = ros::Time::now();
 
-        if (first_press || (current_time - last_press_time).toSec() > 0.5)
+        if (first_press || (current_time - last_press_time).toSec() > 2)
         {
             // First press or timeout of 0.5 seconds; reset for double-press detection
             ROS_INFO_STREAM("First press detected");
@@ -894,7 +903,8 @@ void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg)
         {
             // Double press detected within 0.5 seconds
             ROS_INFO("Double press detected: Clearing all markers except the current marker");
-            clearAllMarkersExceptCurrent();
+            // clearAllMarkersExceptCurrent();
+            marker_arr.markers.push_back( deleteMarker(_DELETE) );
             first_press = true;  // Reset the state
         }
     }
