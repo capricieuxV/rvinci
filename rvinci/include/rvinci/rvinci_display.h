@@ -208,7 +208,6 @@ private:
   visualization_msgs::Marker makeLineMarker(geometry_msgs::Point p1, geometry_msgs::Point p2, int id);
   visualization_msgs::Marker makeTextMessage(geometry_msgs::Pose p, std::string msg, int id);
   visualization_msgs::Marker deleteMarker(int id);
-  void clearAllMarkersExceptCurrent();
 
   //measurement
   double calculateDistance(geometry_msgs::Pose p1, geometry_msgs::Pose p2);

@@ -685,25 +685,6 @@ visualization_msgs::Marker rvinciDisplay::deleteMarker(int id)
   return marker;
 }
 
-
-void rvinciDisplay::clearAllMarkersExceptCurrent()
-{
-    visualization_msgs::MarkerArray marker_arr;
-
-    // Create a delete all markers command except for the current marker
-    visualization_msgs::Marker delete_all;
-    delete_all.action = visualization_msgs::Marker::DELETEALL;
-    marker_arr.markers.push_back(delete_all);
-
-    // Ensure the current marker remains on the screen
-    marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
-    marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
-    marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, _LINE));
-
-    // Publish the marker array
-    publisher_markers.publish(marker_arr);
-}
-
 void rvinciDisplay::publishMeasurementMarkers()
 {
   visualization_msgs::MarkerArray marker_arr;
@@ -723,11 +704,11 @@ void rvinciDisplay::publishMeasurementMarkers()
     {
       case _BEGIN:
         // ROS_INFO_STREAM("BEGINNING");
-        // clearAllMarkersExceptCurrent();
         // marker_arr.markers.push_back( makeTextMessage(text_pose, "Beginning", _STATUS_TEXT) );
         // marker_arr.markers.push_back( deleteMarker(_DELETE) );
         if (flag_delete_marker_)
-        {
+        { 
+          ROS_INFO_STREAM("DELETING MARKERS");
           marker_arr.markers.push_back( deleteMarker(_DELETE) );
           flag_delete_marker_ = false;
         }
@@ -823,11 +804,11 @@ void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg)
 
       if (clutch_quick_tap_)
       {
+        ROS_INFO_STREAM("Clutch quick tap, deleting markers");
         flag_delete_marker_ = true;
       }
     }
     else clutch_quick_tap_ = false;
-
 
 }
 
