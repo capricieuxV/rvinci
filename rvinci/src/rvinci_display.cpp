@@ -689,13 +689,13 @@ visualization_msgs::Marker rvinciDisplay::makeLineMarker(geometry_msgs::Point p1
     return marker;
 }
 
-visualization_msgs::Marker rvinciDisplay::deleteMarker(int id) {
+visualization_msgs::Marker rvinciDisplay::deleteAllMarkers() {
     visualization_msgs::Marker marker;
     marker.header.frame_id = "base_link";
     marker.header.stamp = ros::Time::now();
-    marker.ns = "basic_shapes";
-    marker.id = id;
-    marker.action = visualization_msgs::Marker::DELETE;
+    marker.ns = ""; // Clear the namespace to target all markers.
+    marker.id = 0; // ID set to zero, not relevant when using DELETEALL.
+    marker.action = visualization_msgs::Marker::DELETEALL; // Delete all markers.
 
     return marker;
 }
@@ -722,7 +722,8 @@ if (MTM_mm_) {  // MTM measurement
                 if (flag_delete_marker_)
                 { 
                     ROS_INFO_STREAM("DELETING MARKERS");
-                    marker_arr.markers.push_back(deleteMarker(_DELETE));
+                    marker_arr.markers.push_back(deleteAllMarkers());
+                    publisher_markers.publish(marker_arr);
                     flag_delete_marker_ = false;
                 }
                 break;
@@ -766,7 +767,8 @@ if (MTM_mm_) {  // MTM measurement
                 if (flag_delete_marker_)
                 { 
                     ROS_INFO_STREAM("DELETING MARKERS");
-                    marker_arr.markers.push_back(deleteMarker(_DELETE));
+                    marker_arr.markers.push_back(deleteAllMarkers());
+                    publisher_markers.publish(marker_arr);
                     flag_delete_marker_ = false;
                 }
                 break;
@@ -809,10 +811,10 @@ if (MTM_mm_) {  // MTM measurement
       case _BEGIN:
         if (flag_delete_marker_)
         {
-          marker_arr.markers.push_back( deleteMarker(_DELETE) );
+          marker_arr.markers.push_back(deleteAllMarkers());
+          publisher_markers.publish(marker_arr);
           flag_delete_marker_ = false;
         }
-        // marker_arr.markers.push_back( deleteMarker(_DELETE) );
         break;
       case _START_MEASUREMENT:
         // ROS_INFO_STREAM("PSM start: "<<PSM_pose_start_.position.x<<" "<<PSM_pose_start_.position.y<<" "<<PSM_pose_start_.position.z);
