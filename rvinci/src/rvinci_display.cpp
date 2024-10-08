@@ -819,49 +819,48 @@ if (MTM_mm_) {  // MTM measurement
     }
   else{
     ROS_INFO_STREAM("SINGLE PSM MEASUREMENT");
-    
+      if (left_grab_ || right_grab_) {  // Check if either left or right gripper is closed
+      switch (measurement_status_PSM_) {
+          case _BEGIN:
+              if (flag_delete_marker_) {
+                  marker_arr.markers.push_back(deleteAllMarkers());
+                  publisher_markers.publish(marker_arr);
+                  flag_delete_marker_ = false;
+              }
+              break;
+
+          case _START_MEASUREMENT:
+              if (left_grab_) {
+                  marker_arr.markers.push_back(makeTextMessage(text_pose, "start left-hand measurement", _STATUS_TEXT));
+                  marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
+              } else if (right_grab_) {
+                  marker_arr.markers.push_back(makeTextMessage(text_pose, "start right-hand measurement", _STATUS_TEXT));
+                  marker_arr.markers.push_back(makeMarker(PSM_pose_end_, _START_POINT));
+              }
+              break;
+
+          case _END_MEASUREMENT:
+              if (left_grab_) {
+                  marker_arr.markers.push_back(makeTextMessage(text_pose, "end left-hand measurement", _STATUS_TEXT));
+                  marker_arr.markers.push_back(makeTextMessage(distance_pose,
+                      std::to_string(calculateDistance(PSM_pose_start_, PSM_pose_end_) * 1000) + " mm", _DISTANCE_TEXT));
+                  marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
+                  marker_arr.markers.push_back(makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, uniqueLineMarkerID()));
+              } else if (right_grab_) {
+                  marker_arr.markers.push_back(makeTextMessage(text_pose, "end right-hand measurement", _STATUS_TEXT));
+                  marker_arr.markers.push_back(makeTextMessage(distance_pose,
+                      std::to_string(calculateDistance(PSM_pose_start_, PSM_pose_end_) * 1000) + " mm", _DISTANCE_TEXT));
+                  marker_arr.markers.push_back(makeMarker(PSM_pose_end_, _END_POINT));
+                  marker_arr.markers.push_back(makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, uniqueLineMarkerID()));
+              }
+              break;
+        }
+      }
    }
   }
   else
   {
     ROS_INFO_STREAM("No measurement mode selected");
-
-    if (left_grab_ || right_grab_) {  // Check if either left or right gripper is closed
-        switch (measurement_status_PSM_) {
-            case _BEGIN:
-                if (flag_delete_marker_) {
-                    marker_arr.markers.push_back(deleteAllMarkers());
-                    publisher_markers.publish(marker_arr);
-                    flag_delete_marker_ = false;
-                }
-                break;
-
-            case _START_MEASUREMENT:
-                if (left_grab_) {
-                    marker_arr.markers.push_back(makeTextMessage(text_pose, "start left-hand measurement", _STATUS_TEXT));
-                    marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
-                } else if (right_grab_) {
-                    marker_arr.markers.push_back(makeTextMessage(text_pose, "start right-hand measurement", _STATUS_TEXT));
-                    marker_arr.markers.push_back(makeMarker(PSM_pose_end_, _START_POINT));
-                }
-                break;
-
-            case _END_MEASUREMENT:
-                if (left_grab_) {
-                    marker_arr.markers.push_back(makeTextMessage(text_pose, "end left-hand measurement", _STATUS_TEXT));
-                    marker_arr.markers.push_back(makeTextMessage(distance_pose,
-                        std::to_string(calculateDistance(PSM_pose_start_, PSM_pose_end_) * 1000) + " mm", _DISTANCE_TEXT));
-                    marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
-                    marker_arr.markers.push_back(makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, uniqueLineMarkerID()));
-                } else if (right_grab_) {
-                    marker_arr.markers.push_back(makeTextMessage(text_pose, "end right-hand measurement", _STATUS_TEXT));
-                    marker_arr.markers.push_back(makeTextMessage(distance_pose,
-                        std::to_string(calculateDistance(PSM_pose_start_, PSM_pose_end_) * 1000) + " mm", _DISTANCE_TEXT));
-                    marker_arr.markers.push_back(makeMarker(PSM_pose_end_, _END_POINT));
-                    marker_arr.markers.push_back(makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, uniqueLineMarkerID()));
-                }
-                break;
-        }
   }
   publisher_markers.publish(marker_arr);
 }
