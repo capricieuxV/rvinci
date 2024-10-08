@@ -567,20 +567,6 @@ void rvinciDisplay::cameraUpdate()
   camera_[_RIGHT]->setOrientation(camera_ori_);
 
   frame_manager_.setFixedFrame("base_link");
-
-  // ROS_INFO_STREAM(frame_manager_.getFixedFrame());
-  // std::string errmsg;
-  // frame_manager_.frameHasProblems("base_link", ros::Time(0), errmsg);
-  // ROS_INFO_STREAM("frame has problem: "<<errmsg);
-  // frame_manager_.transformHasProblems("base_link", ros::Time(0), errmsg);
-  // ROS_INFO_STREAM("transform has problem: "<<errmsg);
-  // frame_manager_.frameHasProblems("jhu_daVinci_stereo_frame", ros::Time(0), errmsg);
-  // ROS_INFO_STREAM("frame has problem: "<<errmsg);
-  // frame_manager_.transformHasProblems("jhu_daVinci_stereo_frame", ros::Time(0), errmsg);
-  // ROS_INFO_STREAM("transform has problem: "<<errmsg);
-
-  // ROS_INFO_STREAM("camera pos: "<<camera_pos_.x<<" "<<camera_pos_.y<<" "<<camera_pos_.z);
-  // ROS_INFO_STREAM("camera offset: "<<baseline);
 }
 
 void rvinciDisplay::preRenderTargetUpdate(const Ogre::RenderTargetEvent& evt)
@@ -802,32 +788,48 @@ if (MTM_mm_) {  // MTM measurement
     }
 }
 
-  // TODO: PSM measurement
-  // To measure PSM, both left and right grippers should be closed and footpedal should be pressed
-  else if (PSM_mm_){  // PSM measurement
-    // ROS_INFO_STREAM("\n&&&&&&&&&&&&&& PSM measurement &&&&&&&&&&&&&&\n");
-    switch(measurement_status_PSM_)
-    {
-      case _BEGIN:
-        if (flag_delete_marker_)
-        {
-          marker_arr.markers.push_back(deleteAllMarkers());
-          publisher_markers.publish(marker_arr);
-          flag_delete_marker_ = false;
-        }
-        break;
-      case _START_MEASUREMENT:
-        marker_arr.markers.push_back( makeTextMessage(text_pose, "start measurement", _STATUS_TEXT) );
-        marker_arr.markers.push_back( makeTextMessage(distance_pose, 
-          std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000)+" mm", _DISTANCE_TEXT) );
-        break;
-      case _END_MEASUREMENT:
-        marker_arr.markers.push_back( makeTextMessage(text_pose, "end measurement", _STATUS_TEXT) );
-        marker_arr.markers.push_back( makeTextMessage(distance_pose, 
-          std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000)+" mm", _DISTANCE_TEXT) );
-        break;
+// To measure PSM, both left and right grippers should be closed and footpedal should be pressed
+else if (PSM_mm_) {  // PSM measurement
+    switch (measurement_status_PSM_) {
+        case _BEGIN:
+            if (flag_delete_marker_) {
+                marker_arr.markers.push_back(deleteAllMarkers());
+                publisher_markers.publish(marker_arr);
+                flag_delete_marker_ = false;
+            }
+            break;
+
+        case _START_MEASUREMENT:
+            if (dual_hand_mode_) {  // Dual-hand mode
+                marker_arr.markers.push_back(makeTextMessage(text_pose, "start dual-hand measurement", _STATUS_TEXT));
+                marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
+                marker_arr.markers.push_back(makeMarker(PSM_pose_end_, _END_POINT));
+                marker_arr.markers.push_back(makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, uniqueLineMarkerID()));
+            } else {  // Single-hand mode
+                marker_arr.markers.push_back(makeTextMessage(text_pose, "start single-hand measurement", _STATUS_TEXT));
+                marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
+            }
+            break;
+
+        case _END_MEASUREMENT:
+            if (dual_hand_mode_) {  // Dual-hand mode
+                marker_arr.markers.push_back(makeTextMessage(text_pose, "end dual-hand measurement", _STATUS_TEXT));
+                marker_arr.markers.push_back(makeTextMessage(distance_pose, 
+                    std::to_string(calculateDistance(PSM_pose_start_, PSM_pose_end_) * 1000) + " mm", _DISTANCE_TEXT));
+                marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
+                marker_arr.markers.push_back(makeMarker(PSM_pose_end_, _END_POINT));
+                marker_arr.markers.push_back(makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, uniqueLineMarkerID()));
+            } else {  // Single-hand mode
+                marker_arr.markers.push_back(makeTextMessage(text_pose, "end single-hand measurement", _STATUS_TEXT));
+                marker_arr.markers.push_back(makeTextMessage(distance_pose, 
+                    std::to_string(calculateDistance(PSM_pose_start_, PSM_pose_end_) * 1000) + " mm", _DISTANCE_TEXT));
+                marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
+                marker_arr.markers.push_back(makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, uniqueLineMarkerID()));
+            }
+            break;
     }
-  }
+}
+
   else
   {
     ROS_INFO_STREAM("No measurement mode selected");
