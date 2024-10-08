@@ -904,7 +904,7 @@ void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg)
             // Double press detected within 0.5 seconds
             ROS_INFO("Double press detected: Clearing all markers except the current marker");
             // clearAllMarkersExceptCurrent();
-            marker_arr.markers.push_back( deleteMarker(_DELETE) );
+            flag_delete_marker_ = true;
             first_press = true;  // Reset the state
         }
     }
