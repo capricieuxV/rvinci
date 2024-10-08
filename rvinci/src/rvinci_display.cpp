@@ -817,9 +817,6 @@ if (MTM_mm_) {  // MTM measurement
         }
         break;
       case _START_MEASUREMENT:
-        // ROS_INFO_STREAM("PSM start: "<<PSM_pose_start_.position.x<<" "<<PSM_pose_start_.position.y<<" "<<PSM_pose_start_.position.z);
-        // ROS_INFO_STREAM("PSM end: "<<PSM_pose_end_.position.x<<" "<<PSM_pose_end_.position.y<<" "<<PSM_pose_end_.position.z);
-        // ROS_INFO_STREAM(calculateDistance(PSM_pose_start_, PSM_pose_end_));
         marker_arr.markers.push_back( makeTextMessage(text_pose, "start measurement", _STATUS_TEXT) );
         marker_arr.markers.push_back( makeTextMessage(distance_pose, 
           std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000)+" mm", _DISTANCE_TEXT) );
@@ -835,11 +832,6 @@ if (MTM_mm_) {  // MTM measurement
   {
     ROS_INFO_STREAM("No measurement mode selected");
   }
-
-  // PSM marker location test
-  // marker_arr.markers.push_back( makeMarker(PSM_pose_start_, _START_POINT) );
-  // marker_arr.markers.push_back( makeMarker(PSM_pose_end_, _END_POINT) );
-
   publisher_markers.publish(marker_arr);
 }
 
