@@ -273,8 +273,6 @@ private:
   Ogre::Vector3 input_pos_[2];
   Ogre::Vector3 input_change_[2];
 
-  ros::Time camera_press_start_time_;
-
   ros::NodeHandle nh_;
   ros::Subscriber subscriber_input_;
   ros::Subscriber subscriber_lcam_;

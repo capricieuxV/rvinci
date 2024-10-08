@@ -855,53 +855,48 @@ void rvinciDisplay::clearAllMarkersExceptCurrent()
 {
     visualization_msgs::MarkerArray marker_arr;
 
-    // Add the current markers back to the marker array to keep them on the screen
-    if (MTM_mm_)
-    {
-        // Add the current MTM markers (start and end points) if they exist
-        marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
-        marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
-        marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, _LINE));
-    }
-    else if (PSM_mm_)
-    {
-        // Add the current PSM markers (start and end points) if they exist
-        marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
-        marker_arr.markers.push_back(makeMarker(PSM_pose_end_, _END_POINT));
-        marker_arr.markers.push_back(makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, _LINE));
-    }
+    // Create a delete all markers command except for the current marker
+    visualization_msgs::Marker delete_all;
+    delete_all.action = visualization_msgs::Marker::DELETEALL;
+    marker_arr.markers.push_back(delete_all);
 
-    // Publish the marker array with only the current markers to clear all others
+    // Ensure the current marker remains on the screen
+    marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
+    marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
+    marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, _LINE));
+
+    // Publish the marker array
     publisher_markers.publish(marker_arr);
+
+    ROS_INFO_STREAM("Cleared all markers except for the current marker.");
 }
+
 
 
 void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg) 
 {
     // Buttons: 0 - released, 1 - pressed, 2 - quick tap
-    if (msg->buttons[0] == 1)  // Camera pedal pressed
+    static ros::Time last_press_time;
+    static bool first_press = true;
+
+    if (msg->buttons[0] == 1)  // Check if the camera button is pressed
     {
-      ROS_INFO_STREAM("Camera pedal pressed");
-      if (camera_press_start_time_.isZero())  // If this is the first press, start timing
-      { 
-        ROS_INFO_STREAM("Camera pedal first press");
-        camera_press_start_time_ = ros::Time::now();
-      }
-      else
-      {
-        // Check if the camera pedal has been held for more than 3 seconds
-        if ((ros::Time::now() - camera_press_start_time_).toSec() > 3.0)
+        ros::Time current_time = ros::Time::now();
+
+        if (first_press || (current_time - last_press_time).toSec() > 0.5)
         {
-          ROS_INFO_STREAM("Camera pedal held for more than 3 seconds");
-          clearAllMarkersExceptCurrent();
-          camera_press_start_time_ = ros::Time();  // Reset the timing
+            // First press or timeout of 0.5 seconds; reset for double-press detection
+            ROS_INFO_STREAM("First press detected");
+            first_press = false;
+            last_press_time = current_time;
         }
-      }
-    }
-    else  // Camera pedal released
-    { 
-      ROS_INFO_STREAM("Camera pedal released");
-      camera_press_start_time_ = ros::Time();  // Reset the timing
+        else
+        {
+            // Double press detected within 0.5 seconds
+            ROS_INFO("Double press detected: Clearing all markers except the current marker");
+            clearAllMarkersExceptCurrent();
+            first_press = true;  // Reset the state
+        }
     }
 
     // Handle quick tap logic for measurement
