@@ -788,51 +788,80 @@ if (MTM_mm_) {  // MTM measurement
     }
 }
 
-// To measure PSM, both left and right grippers should be closed and footpedal should be pressed
-else if (PSM_mm_) {  // PSM measurement
-    switch (measurement_status_PSM_) {
+  // TODO: PSM measurement
+  // To measure PSM, both left and right grippers should be closed and footpedal should be pressed
+  else if (PSM_mm_){  // PSM measurement
+    // ROS_INFO_STREAM("\n&&&&&&&&&&&&&& PSM measurement &&&&&&&&&&&&&&\n");
+    dual_hand_mode_ = true; // PSM measurement is default set to dual-hand mode
+
+    if (dual_hand_mode_){
+      switch(measurement_status_PSM_)
+      {
         case _BEGIN:
-            if (flag_delete_marker_) {
-                marker_arr.markers.push_back(deleteAllMarkers());
-                publisher_markers.publish(marker_arr);
-                flag_delete_marker_ = false;
-            }
-            break;
-
+          if (flag_delete_marker_)
+          {
+            marker_arr.markers.push_back(deleteAllMarkers());
+            publisher_markers.publish(marker_arr);
+            flag_delete_marker_ = false;
+          }
+          break;
         case _START_MEASUREMENT:
-            if (dual_hand_mode_) {  // Dual-hand mode
-                marker_arr.markers.push_back(makeTextMessage(text_pose, "start dual-hand measurement", _STATUS_TEXT));
-                marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
-                marker_arr.markers.push_back(makeMarker(PSM_pose_end_, _END_POINT));
-                marker_arr.markers.push_back(makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, uniqueLineMarkerID()));
-            } else {  // Single-hand mode
-                marker_arr.markers.push_back(makeTextMessage(text_pose, "start single-hand measurement", _STATUS_TEXT));
-                marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
-            }
-            break;
-
+          marker_arr.markers.push_back( makeTextMessage(text_pose, "start measurement", _STATUS_TEXT) );
+          marker_arr.markers.push_back( makeTextMessage(distance_pose, 
+            std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000)+" mm", _DISTANCE_TEXT) );
+          break;
         case _END_MEASUREMENT:
-            if (dual_hand_mode_) {  // Dual-hand mode
-                marker_arr.markers.push_back(makeTextMessage(text_pose, "end dual-hand measurement", _STATUS_TEXT));
-                marker_arr.markers.push_back(makeTextMessage(distance_pose, 
-                    std::to_string(calculateDistance(PSM_pose_start_, PSM_pose_end_) * 1000) + " mm", _DISTANCE_TEXT));
-                marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
-                marker_arr.markers.push_back(makeMarker(PSM_pose_end_, _END_POINT));
-                marker_arr.markers.push_back(makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, uniqueLineMarkerID()));
-            } else {  // Single-hand mode
-                marker_arr.markers.push_back(makeTextMessage(text_pose, "end single-hand measurement", _STATUS_TEXT));
-                marker_arr.markers.push_back(makeTextMessage(distance_pose, 
-                    std::to_string(calculateDistance(PSM_pose_start_, PSM_pose_end_) * 1000) + " mm", _DISTANCE_TEXT));
-                marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
-                marker_arr.markers.push_back(makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, uniqueLineMarkerID()));
-            }
-            break;
+          marker_arr.markers.push_back( makeTextMessage(text_pose, "end measurement", _STATUS_TEXT) );
+          marker_arr.markers.push_back( makeTextMessage(distance_pose, 
+            std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000)+" mm", _DISTANCE_TEXT) );
+          break;
+      }
     }
-}
-
+  else{
+    ROS_INFO_STREAM("SINGLE PSM MEASUREMENT");
+    
+   }
+  }
   else
   {
     ROS_INFO_STREAM("No measurement mode selected");
+
+    if (left_grab_ || right_grab_) {  // Check if either left or right gripper is closed
+        switch (measurement_status_PSM_) {
+            case _BEGIN:
+                if (flag_delete_marker_) {
+                    marker_arr.markers.push_back(deleteAllMarkers());
+                    publisher_markers.publish(marker_arr);
+                    flag_delete_marker_ = false;
+                }
+                break;
+
+            case _START_MEASUREMENT:
+                if (left_grab_) {
+                    marker_arr.markers.push_back(makeTextMessage(text_pose, "start left-hand measurement", _STATUS_TEXT));
+                    marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
+                } else if (right_grab_) {
+                    marker_arr.markers.push_back(makeTextMessage(text_pose, "start right-hand measurement", _STATUS_TEXT));
+                    marker_arr.markers.push_back(makeMarker(PSM_pose_end_, _START_POINT));
+                }
+                break;
+
+            case _END_MEASUREMENT:
+                if (left_grab_) {
+                    marker_arr.markers.push_back(makeTextMessage(text_pose, "end left-hand measurement", _STATUS_TEXT));
+                    marker_arr.markers.push_back(makeTextMessage(distance_pose,
+                        std::to_string(calculateDistance(PSM_pose_start_, PSM_pose_end_) * 1000) + " mm", _DISTANCE_TEXT));
+                    marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
+                    marker_arr.markers.push_back(makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, uniqueLineMarkerID()));
+                } else if (right_grab_) {
+                    marker_arr.markers.push_back(makeTextMessage(text_pose, "end right-hand measurement", _STATUS_TEXT));
+                    marker_arr.markers.push_back(makeTextMessage(distance_pose,
+                        std::to_string(calculateDistance(PSM_pose_start_, PSM_pose_end_) * 1000) + " mm", _DISTANCE_TEXT));
+                    marker_arr.markers.push_back(makeMarker(PSM_pose_end_, _END_POINT));
+                    marker_arr.markers.push_back(makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, uniqueLineMarkerID()));
+                }
+                break;
+        }
   }
   publisher_markers.publish(marker_arr);
 }
