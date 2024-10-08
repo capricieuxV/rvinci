@@ -797,58 +797,59 @@ if (MTM_mm_) {  // MTM measurement
       switch(measurement_status_PSM_)
       {
         case _BEGIN:
-          if (flag_delete_marker_)
-          {
-            marker_arr.markers.push_back(deleteAllMarkers());
-            publisher_markers.publish(marker_arr);
-            flag_delete_marker_ = false;
-          }
+          // if (flag_delete_marker_)
+          // {
+          //   marker_arr.markers.push_back(deleteAllMarkers());
+          //   publisher_markers.publish(marker_arr);
+          //   flag_delete_marker_ = false;
+          // }
           break;
         case _START_MEASUREMENT:
           marker_arr.markers.push_back( makeTextMessage(text_pose, "start measurement", _STATUS_TEXT) );
-          marker_arr.markers.push_back( makeTextMessage(distance_pose, 
-            std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000)+" mm", _DISTANCE_TEXT) );
+          marker_arr.markers.push_back( makeTextMessage(distance_pose, std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000)+" mm", _DISTANCE_TEXT) );
+          marker_arr.markers.push_back( makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, 1));
           break;
         case _END_MEASUREMENT:
           marker_arr.markers.push_back( makeTextMessage(text_pose, "end measurement", _STATUS_TEXT) );
-          marker_arr.markers.push_back( makeTextMessage(distance_pose, 
-            std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000)+" mm", _DISTANCE_TEXT) );
+          marker_arr.markers.push_back( makeTextMessage(distance_pose, std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000)+" mm", _DISTANCE_TEXT) );
+          marker_arr.markers.push_back( makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, uniqueLineMarkerID()));
           break;
       }
     }
   else{
-    ROS_INFO_STREAM("SINGLE PSM MEASUREMENT");
       if (left_grab_ || right_grab_) {  // Check if either left or right gripper is closed
       switch (measurement_status_PSM_) {
           case _BEGIN:
-              if (flag_delete_marker_) {
-                  marker_arr.markers.push_back(deleteAllMarkers());
-                  publisher_markers.publish(marker_arr);
-                  flag_delete_marker_ = false;
-              }
+              // if (flag_delete_marker_) {
+              //     marker_arr.markers.push_back(deleteAllMarkers());
+              //     publisher_markers.publish(marker_arr);
+              //     flag_delete_marker_ = false;
+              // }
               break;
 
           case _START_MEASUREMENT:
               if (left_grab_) {
                   marker_arr.markers.push_back(makeTextMessage(text_pose, "start left-hand measurement", _STATUS_TEXT));
                   marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
+                  marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(PSM_pose_start_, PSM_pose_end_) * 1000) + " mm", _DISTANCE_TEXT));
+                  marker_arr.markers.push_back(makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, 1));
               } else if (right_grab_) {
                   marker_arr.markers.push_back(makeTextMessage(text_pose, "start right-hand measurement", _STATUS_TEXT));
                   marker_arr.markers.push_back(makeMarker(PSM_pose_end_, _START_POINT));
+                  marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(PSM_pose_start_, PSM_pose_end_) * 1000) + " mm", _DISTANCE_TEXT));
+                  marker_arr.markers.push_back(makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, 1));
               }
               break;
 
           case _END_MEASUREMENT:
               if (left_grab_) {
                   marker_arr.markers.push_back(makeTextMessage(text_pose, "end left-hand measurement", _STATUS_TEXT));
-                  marker_arr.markers.push_back(makeTextMessage(distance_pose,
-                      std::to_string(calculateDistance(PSM_pose_start_, PSM_pose_end_) * 1000) + " mm", _DISTANCE_TEXT));
+                  marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(PSM_pose_start_, PSM_pose_end_) * 1000) + " mm", _DISTANCE_TEXT));
                   marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
                   marker_arr.markers.push_back(makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, uniqueLineMarkerID()));
               } else if (right_grab_) {
                   marker_arr.markers.push_back(makeTextMessage(text_pose, "end right-hand measurement", _STATUS_TEXT));
-                  marker_arr.markers.push_back(makeTextMessage(distance_pose,
-                      std::to_string(calculateDistance(PSM_pose_start_, PSM_pose_end_) * 1000) + " mm", _DISTANCE_TEXT));
+                  marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(PSM_pose_start_, PSM_pose_end_) * 1000) + " mm", _DISTANCE_TEXT));
                   marker_arr.markers.push_back(makeMarker(PSM_pose_end_, _END_POINT));
                   marker_arr.markers.push_back(makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, uniqueLineMarkerID()));
               }
@@ -955,72 +956,130 @@ void rvinciDisplay::MTMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg,
   rvmsg_.gripper[i].pose.position.z -= 0.4;
 }
 
+// void rvinciDisplay::PSMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg, int i)
+// {
+//   // MTMR-PSM1, MTML-PSM2
+//   if (start_measurement_PSM_[_LEFT] || start_measurement_PSM_[_RIGHT] && measurement_status_PSM_ == _START_MEASUREMENT)
+//   {
+//     switch (i)
+//     {
+//       case _LEFT: 
+//         PSM_pose_start_ = msg->pose;
+//         PSM_pose_start_.position.x -= 0.000154096;
+//         PSM_pose_start_.position.y -= 0.000118207;
+//         break;
+//       case _RIGHT: 
+//         PSM_pose_end_ = msg->pose;
+//         PSM_pose_end_.position.x -= 0.000154096;
+//         PSM_pose_end_.position.y -= 0.000118207;
+//         break;
+//     }
+//   }
+// }
 void rvinciDisplay::PSMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg, int i)
 {
-  // MTMR-PSM1, MTML-PSM2
-  if (start_measurement_PSM_[_LEFT] && start_measurement_PSM_[_RIGHT] && measurement_status_PSM_ == _START_MEASUREMENT)
-  {
-    switch (i)
+    // Check if we are in dual-hand mode or single-hand mode
+    if (dual_hand_mode_)
     {
-      case _LEFT: 
-        PSM_pose_start_ = msg->pose;
-        PSM_pose_start_.position.x -= 0.000154096;
-        PSM_pose_start_.position.y -= 0.000118207;
-        break;
-      case _RIGHT: 
-        PSM_pose_end_ = msg->pose;
-        PSM_pose_end_.position.x -= 0.000154096;
-        PSM_pose_end_.position.y -= 0.000118207;
-        break;
+        // In dual-hand mode, update both left and right poses if they are both engaged
+        if (start_measurement_PSM_[_LEFT] && start_measurement_PSM_[_RIGHT] && measurement_status_PSM_ == _START_MEASUREMENT)
+        {
+            switch (i)
+            {
+                case _LEFT: 
+                    PSM_pose_start_ = msg->pose;
+                    PSM_pose_start_.position.x -= 0.000154096;
+                    PSM_pose_start_.position.y -= 0.000118207;
+                    break;
+                case _RIGHT: 
+                    PSM_pose_end_ = msg->pose;
+                    PSM_pose_end_.position.x -= 0.000154096;
+                    PSM_pose_end_.position.y -= 0.000118207;
+                    break;
+            }
+        }
     }
-  }
+    else  // Single-hand mode
+    {
+        // In single-hand mode, update only the gripping hand's pose
+        if ((start_measurement_PSM_[_LEFT] || start_measurement_PSM_[_RIGHT]) && measurement_status_PSM_ == _START_MEASUREMENT)
+        {
+            if (i == _LEFT && start_measurement_PSM_[_LEFT])  // Only update if the left gripper is gripping
+            {
+                PSM_pose_start_ = msg->pose;
+                PSM_pose_start_.position.x -= 0.000154096;
+                PSM_pose_start_.position.y -= 0.000118207;
+            }
+            else if (i == _RIGHT && start_measurement_PSM_[_RIGHT])  // Only update if the right gripper is gripping
+            {
+                PSM_pose_end_ = msg->pose;
+                PSM_pose_end_.position.x -= 0.000154096;
+                PSM_pose_end_.position.y -= 0.000118207;
+            }
+        }
+    }
 }
 
 void rvinciDisplay::gripCallback(const std_msgs::Bool::ConstPtr& msg, int i)
 {
-  // MTM measurement
-  bool is_released = msg->data; // 0 - released, 1 - grabbed
+    // MTM measurement logic
+    bool is_released = msg->data; // 0 - released, 1 - grabbed
 
-  if (!rvmsg_.gripper[i].grab && is_released && marker_side_ == i && measurement_status_MTM != _END_MEASUREMENT)
-  {
-    measurement_status_MTM = _BEGIN;  //if gripper released during measurement, status back to BEGIN
-    if(i == _LEFT)
+    if (!rvmsg_.gripper[i].grab && is_released && marker_side_ == i && measurement_status_MTM != _END_MEASUREMENT)
     {
-      left_grab_ = false;
+        measurement_status_MTM = _BEGIN;  // If gripper released during measurement, status back to BEGIN
+        if (i == _LEFT)
+        {
+            left_grab_ = false;
+        }
+        else
+        {
+            right_grab_ = false;
+        }
     }
-    else
-    {
-      right_grab_ = false;
-    }
-  }
 
-  if (!is_released && measurement_status_MTM == _BEGIN) 
-  {
-    marker_side_ = i;  //gripper closed from another arm shouldnt interrupt the measurement process
-    if(i == _LEFT)
+    if (!is_released && measurement_status_MTM == _BEGIN)
     {
-      left_grab_ = true;
+        marker_side_ = i;  // Gripper closed from another arm shouldn't interrupt the measurement process
+        if (i == _LEFT)
+        {
+            left_grab_ = true;
+        }
+        else
+        {
+            right_grab_ = true;
+        }
     }
-    else
+
+    // PSM measurement logic for single-hand and dual-hand mode
+    start_measurement_PSM_[i] = !is_released;  // Update measurement status based on gripper state
+
+    // Dual-hand mode: Both grippers must be closed to start measurement
+    if (dual_hand_mode_)
     {
-      right_grab_ = true;
+        if (start_measurement_PSM_[_LEFT] && start_measurement_PSM_[_RIGHT] && measurement_status_PSM_ == _BEGIN)
+        {
+            measurement_status_PSM_ = _START_MEASUREMENT;
+        }
+        if ((!start_measurement_PSM_[_LEFT] || !start_measurement_PSM_[_RIGHT]) && measurement_status_PSM_ != _END_MEASUREMENT)
+        {
+            measurement_status_PSM_ = _BEGIN;
+        }
     }
-  }
+    else  // Single-hand mode: Either gripper closed is sufficient to start measurement
+    {
+        if ((start_measurement_PSM_[_LEFT] || start_measurement_PSM_[_RIGHT]) && measurement_status_PSM_ == _BEGIN)
+        {
+            measurement_status_PSM_ = _START_MEASUREMENT;
+        }
+        if (!start_measurement_PSM_[_LEFT] && !start_measurement_PSM_[_RIGHT] && measurement_status_PSM_ != _END_MEASUREMENT)
+        {
+            measurement_status_PSM_ = _BEGIN;
+        }
+    }
 
-  // PSM measurement
-  start_measurement_PSM_[i] = !is_released;
-  if (start_measurement_PSM_[_LEFT] && start_measurement_PSM_[_RIGHT] && measurement_status_PSM_ == _BEGIN)
-  {
-    measurement_status_PSM_ = _START_MEASUREMENT;
-  }
-  if (!start_measurement_PSM_[_LEFT] && !start_measurement_PSM_[_RIGHT] && measurement_status_PSM_ != _END_MEASUREMENT)
-  {
-    measurement_status_PSM_ = _BEGIN;
-  }
-
-  rvmsg_.gripper[i].grab = is_released;
+    rvmsg_.gripper[i].grab = is_released;
 }
-
 
 void rvinciDisplay::coagCallback(const sensor_msgs::Joy::ConstPtr& msg)
 {
