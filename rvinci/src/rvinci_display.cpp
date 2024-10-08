@@ -39,7 +39,7 @@ rvinciDisplay::rvinciDisplay()
   , camera_node_(0)
   , window_(0)
   , window_R_(0)
-  , camera_offset_(0.0, 0.0, 0.0)
+  , camera_offset_(0.0, -3.0, 1.5)
 {
   std::string rviz_path = ros::package::getPath(ROS_PACKAGE_NAME);
   Ogre::ResourceGroupManager::getSingleton().addResourceLocation( rviz_path + "/ogre_media", "FileSystem", ROS_PACKAGE_NAME );
@@ -211,8 +211,8 @@ void rvinciDisplay::update(float wall_dt, float ros_dt)
     gravity_published_ = true;
   }
 
-  publishWrench();
-  publishGravity();
+  // publishWrench();
+  // publishGravity();
   
 }
 
@@ -851,48 +851,134 @@ void rvinciDisplay::teleopCallback(const std_msgs::Bool::ConstPtr& msg)
     }
 }
 
+void rvinciDisplay::clearAllMarkersExceptCurrent()
+{
+    visualization_msgs::MarkerArray marker_arr;
+
+    // Add the current markers back to the marker array to keep them on the screen
+    if (MTM_mm_)
+    {
+        // Add the current MTM markers (start and end points) if they exist
+        marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
+        marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
+        marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, _LINE));
+    }
+    else if (PSM_mm_)
+    {
+        // Add the current PSM markers (start and end points) if they exist
+        marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
+        marker_arr.markers.push_back(makeMarker(PSM_pose_end_, _END_POINT));
+        marker_arr.markers.push_back(makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, _LINE));
+    }
+
+    // Publish the marker array with only the current markers to clear all others
+    publisher_markers.publish(marker_arr);
+}
+
+
 void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg) 
 {
-  // buttons: 0 - released, 1 - pressed, 2 - quick tap
-  rvmsg_.camera = msg->buttons[0]; 
-
-  if (msg->buttons[0] == 2) camera_quick_tap_ = true;
-  else camera_quick_tap_ = false;
-
-  // MTM measurement - if camera quick tapped while one gripper closed, begin measurement
-  if (camera_quick_tap_ && !rvmsg_.gripper[marker_side_].grab)
-  {
-    switch (measurement_status_MTM)
+    // Buttons: 0 - released, 1 - pressed, 2 - quick tap
+    if (msg->buttons[0] == 1)  // Camera pedal pressed
     {
-      case _BEGIN: 
-        measurement_status_MTM = _START_MEASUREMENT; 
-        break;
-      case _START_MEASUREMENT: 
-        measurement_status_MTM = _MOVING; 
-        break;
-      case _MOVING: 
-        measurement_status_MTM = _END_MEASUREMENT; 
-        break;
-      case _END_MEASUREMENT: 
-        measurement_status_MTM = _BEGIN; 
-        break;
+      ROS_INFO_STREAM("Camera pedal pressed");
+      if (camera_press_start_time_.isZero())  // If this is the first press, start timing
+      { 
+        ROS_INFO_STREAM("Camera pedal first press");
+        camera_press_start_time_ = ros::Time::now();
+      }
+      else
+      {
+        // Check if the camera pedal has been held for more than 3 seconds
+        if ((ros::Time::now() - camera_press_start_time_).toSec() > 3.0)
+        {
+          ROS_INFO_STREAM("Camera pedal held for more than 3 seconds");
+          clearAllMarkersExceptCurrent();
+          camera_press_start_time_ = ros::Time();  // Reset the timing
+        }
+      }
     }
-  }
-  else if (camera_quick_tap_ && measurement_status_MTM == _END_MEASUREMENT)
-  {
-    measurement_status_MTM = _BEGIN; 
-  }
+    else  // Camera pedal released
+    { 
+      ROS_INFO_STREAM("Camera pedal released");
+      camera_press_start_time_ = ros::Time();  // Reset the timing
+    }
 
-  // PSM measurement - if camera quick tapped while left & right gripper closed, end measurement
-  if (camera_quick_tap_ && measurement_status_PSM_ == _END_MEASUREMENT)
-  {
-    measurement_status_PSM_ = _BEGIN;
-  }
-  else if (camera_quick_tap_ && start_measurement_PSM_[_LEFT] && start_measurement_PSM_[_RIGHT] && measurement_status_PSM_ == _START_MEASUREMENT)
-  {
-    measurement_status_PSM_ = _END_MEASUREMENT;
-  }
+    // Handle quick tap logic for measurement
+    if (msg->buttons[0] == 2) 
+    {
+      ROS_INFO_STREAM("Camera quick tap");
+      camera_quick_tap_ = true;
+
+      // Your existing quick tap measurement handling logic
+      if (camera_quick_tap_ && !rvmsg_.gripper[marker_side_].grab)
+      {
+          switch (measurement_status_MTM)
+          {
+              case _BEGIN: 
+                  measurement_status_MTM = _START_MEASUREMENT; 
+                  break;
+              case _START_MEASUREMENT: 
+                  measurement_status_MTM = _MOVING; 
+                  break;
+              case _MOVING: 
+                  measurement_status_MTM = _END_MEASUREMENT; 
+                  break;
+              case _END_MEASUREMENT: 
+                  measurement_status_MTM = _BEGIN; 
+                  break;
+          }
+      }
+    } 
+    else 
+    {
+        camera_quick_tap_ = false;
+    }
 }
+
+
+// void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg) 
+// {
+//   // buttons: 0 - released, 1 - pressed, 2 - quick tap
+//   rvmsg_.camera = msg->buttons[0]; 
+
+//   if (msg->buttons[0] == 2) camera_quick_tap_ = true;
+//   else camera_quick_tap_ = false;
+
+//   // MTM measurement - if camera quick tapped while one gripper closed, begin measurement
+//   if (camera_quick_tap_ && !rvmsg_.gripper[marker_side_].grab)
+//   {
+//     switch (measurement_status_MTM)
+//     {
+//       case _BEGIN: 
+//         measurement_status_MTM = _START_MEASUREMENT; 
+//         break;
+//       case _START_MEASUREMENT: 
+//         measurement_status_MTM = _MOVING; 
+//         break;
+//       case _MOVING: 
+//         measurement_status_MTM = _END_MEASUREMENT; 
+//         break;
+//       case _END_MEASUREMENT: 
+//         measurement_status_MTM = _BEGIN; 
+//         break;
+//     }
+//   }
+//   else if (camera_quick_tap_ && measurement_status_MTM == _END_MEASUREMENT)
+//   {
+//     measurement_status_MTM = _BEGIN; 
+//   }
+
+//   // PSM measurement - if camera quick tapped while left & right gripper closed, end measurement
+//   if (camera_quick_tap_ && measurement_status_PSM_ == _END_MEASUREMENT)
+//   {
+//     measurement_status_PSM_ = _BEGIN;
+//   }
+//   else if (camera_quick_tap_ && start_measurement_PSM_[_LEFT] && start_measurement_PSM_[_RIGHT] && measurement_status_PSM_ == _START_MEASUREMENT)
+//   {
+//     measurement_status_PSM_ = _END_MEASUREMENT;
+//   }
+// }
 
 void rvinciDisplay::MTMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg, int i)
 {
