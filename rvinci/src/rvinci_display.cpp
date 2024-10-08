@@ -792,7 +792,6 @@ if (MTM_mm_) {  // MTM measurement
   // To measure PSM, both left and right grippers should be closed and footpedal should be pressed
   else if (PSM_mm_){  // PSM measurement
     // ROS_INFO_STREAM("\n&&&&&&&&&&&&&& PSM measurement &&&&&&&&&&&&&&\n");
-    dual_hand_mode_ = true; // PSM measurement is default set to dual-hand mode
 
     if (dual_hand_mode_){
       switch(measurement_status_PSM_)
