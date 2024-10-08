@@ -735,17 +735,13 @@ if (MTM_mm_) {  // MTM measurement
                 marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(cursor_[_LEFT], cursor_[_RIGHT]) * 10) + " mm", _DISTANCE_TEXT));
                 marker_arr.markers.push_back(makeMarker(cursor_[_LEFT], _START_POINT));
                 marker_arr.markers.push_back(makeMarker(cursor_[_RIGHT], _END_POINT));
-
-                // Add a new line marker that remains on the screen even after state transitions
-                marker_arr.markers.push_back(makeLineMarker(cursor_[_LEFT].position, cursor_[_RIGHT].position, uniqueLineMarkerID()));
                 measurement_start_ = cursor_[_LEFT];
                 measurement_end_ = cursor_[_RIGHT];
                 break;
 
             case _END_MEASUREMENT:
                 marker_arr.markers.push_back(makeTextMessage(text_pose, "End measurement", _STATUS_TEXT));
-                marker_arr.markers.push_back(makeTextMessage(distance_pose, 
-                    std::to_string(calculateDistance(measurement_start_, measurement_end_) * 10) + " mm", _DISTANCE_TEXT));
+                marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(measurement_start_, measurement_end_) * 10) + " mm", _DISTANCE_TEXT));
 
                 marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
                 marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
@@ -754,7 +750,7 @@ if (MTM_mm_) {  // MTM measurement
                 break;
         }
     } else {
-        // Single-hand measurement logic (existing functionality)
+        // Single-hand measurement logic 
         switch (measurement_status_MTM)
         {
             case _BEGIN:
@@ -777,18 +773,14 @@ if (MTM_mm_) {  // MTM measurement
                 marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(measurement_start_, cursor_[marker_side_]) * 10) + " mm", _DISTANCE_TEXT));
                 marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
                 marker_arr.markers.push_back(makeMarker(cursor_[marker_side_], _END_POINT));
-
-                marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, cursor_[marker_side_].position, uniqueLineMarkerID()));
                 measurement_end_ = cursor_[marker_side_];
                 break;
 
             case _END_MEASUREMENT:
                 marker_arr.markers.push_back(makeTextMessage(text_pose, "End measurement", _STATUS_TEXT));
                 marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(measurement_start_, measurement_end_) * 10) + " mm", _DISTANCE_TEXT));
-
                 marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
                 marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
-
                 marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, uniqueLineMarkerID()));
                 break;
         }
@@ -861,6 +853,11 @@ void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg)
     if (clutch_quick_tap_)
     {
         toggleDualHandMode();
+    }
+
+    if (msg -> buttons[1] == 1)
+    {
+      flag_delete_marker_ = true;
     }
 }
 
