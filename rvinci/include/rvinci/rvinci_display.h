@@ -204,12 +204,14 @@ private:
   void publishWrench();
 
   //visualization
+  int uniqueLineMarkerID();
   visualization_msgs::Marker makeMarker(geometry_msgs::Pose p, int id);
   visualization_msgs::Marker makeLineMarker(geometry_msgs::Point p1, geometry_msgs::Point p2, int id);
   visualization_msgs::Marker makeTextMessage(geometry_msgs::Pose p, std::string msg, int id);
   visualization_msgs::Marker deleteMarker(int id);
 
   //measurement
+  void toggleDualHandMode();
   double calculateDistance(geometry_msgs::Pose p1, geometry_msgs::Pose p2);
   void publishMeasurementMarkers();
 
@@ -220,6 +222,7 @@ private:
   // std_msgs::String text_message_;
 
   bool camera_mode_, clutch_mode_;
+  bool dual_hand_mode_;  // Flag to toggle between single-hand and dual-hand measurement
   int  coag_mode_;
   bool prev_grab_[2];
   bool wrench_published_;
