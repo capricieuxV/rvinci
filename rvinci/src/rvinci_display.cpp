@@ -685,6 +685,25 @@ visualization_msgs::Marker rvinciDisplay::deleteMarker(int id)
   return marker;
 }
 
+
+void rvinciDisplay::clearAllMarkersExceptCurrent()
+{
+    visualization_msgs::MarkerArray marker_arr;
+
+    // Create a delete all markers command except for the current marker
+    visualization_msgs::Marker delete_all;
+    delete_all.action = visualization_msgs::Marker::DELETEALL;
+    marker_arr.markers.push_back(delete_all);
+
+    // Ensure the current marker remains on the screen
+    marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
+    marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
+    marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, _LINE));
+
+    // Publish the marker array
+    publisher_markers.publish(marker_arr);
+}
+
 void rvinciDisplay::publishMeasurementMarkers()
 {
   visualization_msgs::MarkerArray marker_arr;
@@ -699,12 +718,13 @@ void rvinciDisplay::publishMeasurementMarkers()
 
   if (MTM_mm_) {  // MTM measurement
     // ROS_INFO_STREAM("\n************** MTM measurement **************\n");
-    marker_arr.markers.push_back( makeTextMessage(text_pose, "MTM MEASUREMENT", _STATUS_TEXT) );
+    // marker_arr.markers.push_back( makeTextMessage(text_pose, "MTM MEASUREMENT", _STATUS_TEXT) );
     switch (measurement_status_MTM)
     {
       case _BEGIN:
         // ROS_INFO_STREAM("BEGINNING");
-        marker_arr.markers.push_back( makeTextMessage(text_pose, "Beginning", _STATUS_TEXT) );
+        // clearAllMarkersExceptCurrent();
+        // marker_arr.markers.push_back( makeTextMessage(text_pose, "Beginning", _STATUS_TEXT) );
         // marker_arr.markers.push_back( deleteMarker(_DELETE) );
         if (flag_delete_marker_)
         {
@@ -803,40 +823,7 @@ void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg)
 
       if (clutch_quick_tap_)
       {
-        // Create the InteractionCursorUpdate message to update cursor state
-        interaction_cursor_msgs::InteractionCursorUpdate cursor_msg;
-
-        // Toggle the visibility of the cursor
-        cursor_visible_ = !cursor_visible_;
-        cursor_msg.show = cursor_visible_;  // Toggle visibility
-
-        // Set the pose of the cursor (this could be dynamically set based on your system's logic)
-        cursor_msg.pose.header.frame_id = context_->getFixedFrame().toStdString();
-        cursor_msg.pose.header.stamp = ros::Time::now();
-        cursor_msg.pose.pose.position.x = 0.0;  // Example positions
-        cursor_msg.pose.pose.position.y = 0.0;
-        cursor_msg.pose.pose.position.z = 0.0;
-
-        // Required fields for button state and key event, adjust as necessary
-        cursor_msg.button_state = interaction_cursor_msgs::InteractionCursorUpdate::NONE;  // No buttons pressed
-        cursor_msg.key_event = interaction_cursor_msgs::InteractionCursorUpdate::NONE;  // No key event
-
-        // Optionally, you can include markers (such as spheres) for the cursor if needed
-        visualization_msgs::Marker marker;
-        marker.header.frame_id = context_->getFixedFrame().toStdString();
-        marker.header.stamp = ros::Time::now();
-        marker.type = visualization_msgs::Marker::SPHERE;
-        marker.scale.x = 0.05;
-        marker.scale.y = 0.05;
-        marker.scale.z = 0.05;
-        marker.color.r = 0.0;
-        marker.color.g = 1.0;
-        marker.color.b = 0.0;
-        marker.color.a = 1.0;
-        cursor_msg.markers.push_back(marker);  // Add the marker to the message
-
-        // Call the updateCursorVisibility function to process the message
-        updateCursorVisibility(cursor_msg);
+        flag_delete_marker_ = true;
       }
     }
     else clutch_quick_tap_ = false;
@@ -862,52 +849,9 @@ void rvinciDisplay::teleopCallback(const std_msgs::Bool::ConstPtr& msg)
     }
 }
 
-// void rvinciDisplay::clearAllMarkersExceptCurrent()
-// {
-//     visualization_msgs::MarkerArray marker_arr;
-
-//     // Create a delete all markers command except for the current marker
-//     visualization_msgs::Marker delete_all;
-//     delete_all.action = visualization_msgs::Marker::DELETEALL;
-//     marker_arr.markers.push_back(delete_all);
-
-//     // Ensure the current marker remains on the screen
-//     marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
-//     marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
-//     marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, _LINE));
-
-//     // Publish the marker array
-//     publisher_markers.publish(marker_arr);
-
-//     ROS_INFO_STREAM("Cleared all markers except for the current marker.");
-// }
-
 void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg) 
 {
     // Buttons: 0 - released, 1 - pressed, 2 - quick tap
-    static ros::Time last_press_time;
-    static bool first_press = true;
-
-    if (msg->buttons[0] == 1)  // Check if the camera button is pressed
-    {
-        ros::Time current_time = ros::Time::now();
-
-        if (first_press || (current_time - last_press_time).toSec() > 2)
-        {
-            // First press or timeout of 0.5 seconds; reset for double-press detection
-            ROS_INFO_STREAM("First press detected");
-            first_press = false;
-            last_press_time = current_time;
-        }
-        else
-        {
-            // Double press detected within 0.5 seconds
-            ROS_INFO("Double press detected: Clearing all markers except the current marker");
-            // clearAllMarkersExceptCurrent();
-            flag_delete_marker_ = true;
-            first_press = true;  // Reset the state
-        }
-    }
 
     // Handle quick tap logic for measurement
     if (msg->buttons[0] == 2) 
