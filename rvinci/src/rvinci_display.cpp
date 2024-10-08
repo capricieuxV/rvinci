@@ -706,7 +706,7 @@ void rvinciDisplay::publishMeasurementMarkers()
         // ROS_INFO_STREAM("BEGINNING");
         marker_arr.markers.push_back( makeTextMessage(text_pose, "Beginning", _STATUS_TEXT) );
         // marker_arr.markers.push_back( deleteMarker(_DELETE) );
-        if flag_delete_marker_
+        if (flag_delete_marker_)
         {
           marker_arr.markers.push_back( deleteMarker(_DELETE) );
           flag_delete_marker_ = false;
@@ -745,7 +745,7 @@ void rvinciDisplay::publishMeasurementMarkers()
     switch(measurement_status_PSM_)
     {
       case _BEGIN:
-        if flag_delete_marker_
+        if (flag_delete_marker_)
         {
           marker_arr.markers.push_back( deleteMarker(_DELETE) );
           flag_delete_marker_ = false;
