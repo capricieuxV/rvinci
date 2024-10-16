@@ -40,6 +40,8 @@ rvinciDisplay::rvinciDisplay()
   , window_(0)
   , window_R_(0)
   , camera_offset_(0.0,-3.0,1.5)
+  , single_psm_mode_(false)
+  , first_point_set_(false)
 {
   std::string rviz_path = ros::package::getPath(ROS_PACKAGE_NAME);
   Ogre::ResourceGroupManager::getSingleton().addResourceLocation( rviz_path + "/ogre_media", "FileSystem", ROS_PACKAGE_NAME );
@@ -115,7 +117,6 @@ rvinciDisplay::~rvinciDisplay()
   delete prop_camera_posit_;
   delete prop_input_scalar_;
 }
-
 void rvinciDisplay::onInitialize()
 {
   render_widget_ = new rviz::RenderWidget(rviz::RenderSystem::get());
@@ -155,19 +156,12 @@ void rvinciDisplay::onInitialize()
   gravity_published_ = false;
   wrench_published_ = false;
   MTM_mm_ = false;
-  PSM_mm_ = false;
-  cursor_visible_ = false;
-  teleop_mode_ = false;
   left_grab_ = false;
   right_grab_ = false;
-  camera_quick_tap_ = false;
-  clutch_quick_tap_ = false;
-  flag_delete_marker_ = false;
-  show_axes_right_ = true; 
-  show_cursor_right_ = false;
-  show_axes_left_ = true;
-  show_cursor_left_ = false;  Mono_mode_ = false;
+  Mono_mode_ = false;
   coag_init_ = true;
+  left_released_ = false;
+  right_released_ = false;
 
   measurement_status_MTM = _BEGIN;
   measurement_status_PSM_ = _BEGIN;
@@ -175,7 +169,6 @@ void rvinciDisplay::onInitialize()
   input_pos_[_LEFT].x = input_pos_[_LEFT].y = input_pos_[_LEFT].z = 0;
   input_pos_[_RIGHT].x = input_pos_[_RIGHT].y = input_pos_[_RIGHT].z = 0;
 }
-
 void rvinciDisplay::update(float wall_dt, float ros_dt)
 {
   if( backgroundImage_[0] != NULL ){
@@ -203,19 +196,19 @@ void rvinciDisplay::update(float wall_dt, float ros_dt)
 
   publishMeasurementMarkers();
 
-  if (!wrench_published_) 
-  {
-    publishWrench();
-    wrench_published_ = true;
-  }
-  if (wrench_published_ && !gravity_published_)
-  {
-    publishGravity();
-    gravity_published_ = true;
-  }
+  // if (!wrench_published_) 
+  // {
+  //   publishWrench();
+  //   wrench_published_ = true;
+  // }
+  // if (wrench_published_ && !gravity_published_)
+  // {
+  //   publishGravity();
+  //   gravity_published_ = true;
+  // }
 
-  publishWrench();
-  publishGravity();
+  // publishWrench();
+  // publishGravity();
   
 }
 
@@ -231,22 +224,22 @@ void rvinciDisplay::pubsubSetup()
   subscriber_clutch_ = nh_.subscribe<sensor_msgs::Joy>( "/footpedals/clutch", 10, boost::bind(&rvinciDisplay::clutchCallback,this,_1));
   subscriber_camera_ = nh_.subscribe<sensor_msgs::Joy>( "/footpedals/camera", 10, boost::bind(&rvinciDisplay::cameraCallback,this,_1));
   subscriber_coag_ = nh_.subscribe<sensor_msgs::Joy>( "/footpedals/coag", 10, boost::bind(&rvinciDisplay::coagCallback,this,_1));
-  subscriber_lgrip_ = nh_.subscribe<std_msgs::Bool>("/MTML/gripper/closed",10,boost::bind(&rvinciDisplay::gripCallback,this,_1,_LEFT));
-  subscriber_rgrip_ = nh_.subscribe<std_msgs::Bool>("/MTMR/gripper/closed",10,boost::bind(&rvinciDisplay::gripCallback,this,_1,_RIGHT));
+  subscriber_lgrip_ = nh_.subscribe<std_msgs::Bool>("/MTML/gripper/closed",10, boost::bind(&rvinciDisplay::gripCallback,this,_1,_LEFT));
+  subscriber_rgrip_ = nh_.subscribe<std_msgs::Bool>("/MTMR/gripper/closed",10, boost::bind(&rvinciDisplay::gripCallback,this,_1,_RIGHT));
   
   //MTMR-PSM1, MTML-PSM2
   subscriber_MTML_ = nh_.subscribe<geometry_msgs::PoseStamped>("/MTML/measured_cp", 10, boost::bind(&rvinciDisplay::MTMCallback,this,_1, _LEFT));
   subscriber_MTMR_ = nh_.subscribe<geometry_msgs::PoseStamped>("/MTMR/measured_cp", 10, boost::bind(&rvinciDisplay::MTMCallback,this,_1, _RIGHT));
   subscriber_PSM1_ = nh_.subscribe<geometry_msgs::PoseStamped>("/PSM1/measured_cp", 10, boost::bind(&rvinciDisplay::PSMCallback,this,_1, _RIGHT));
   subscriber_PSM2_ = nh_.subscribe<geometry_msgs::PoseStamped>("/PSM2/measured_cp", 10, boost::bind(&rvinciDisplay::PSMCallback,this,_1, _LEFT));
-  // subscriber_mm_ = nh_.subscribe<std_msgs::Bool>("/rvinci_measurement_MTM", 10, boost::bind(&rvinciDisplay::measurementCallback,this,_1));
   subscriber_teleop_ = nh_.subscribe<std_msgs::Bool>("/console/teleop/enabled", 10, boost::bind(&rvinciDisplay::teleopCallback, this, _1));
+  // subscriber_mm_ = nh_.subscribe<std_msgs::Bool>("/rvinci_measurement_MTM", 10, boost::bind(&rvinciDisplay::measurementCallback,this,_1));
   subscriber_camera_info_ = nh_.subscribe<sensor_msgs::CameraInfo>("/jhu_daVinci/stereo_processed/right/camera_info", 10, boost::bind(&rvinciDisplay::cameraInfoCallback,this,_1));
 
-  publisher_rhcursor_ = nh_.advertise<interaction_cursor_msgs::InteractionCursorUpdate>("/rvinci_cursor_right/update",10);
-  publisher_lhcursor_ = nh_.advertise<interaction_cursor_msgs::InteractionCursorUpdate>("/rvinci_cursor_left/update",10);
-  pub_robot_state_[_LEFT] = nh_.advertise<std_msgs::String>("/dvrk/MTML/set_robot_state",10);
-  pub_robot_state_[_RIGHT] = nh_.advertise<std_msgs::String>("/dvrk/MTMR/set_robot_state",10);
+  publisher_rhcursor_ = nh_.advertise<interaction_cursor_msgs::InteractionCursorUpdate>("rvinci_cursor_right/update",10);
+  publisher_lhcursor_ = nh_.advertise<interaction_cursor_msgs::InteractionCursorUpdate>("rvinci_cursor_left/update",10);
+  // pub_robot_state_[_LEFT] = nh_.advertise<std_msgs::String>("/dvrk/MTML/set_robot_state",10);
+  // pub_robot_state_[_RIGHT] = nh_.advertise<std_msgs::String>("/dvrk/MTMR/set_robot_state",10);
   
   publisher_markers = nh_.advertise<visualization_msgs::MarkerArray>("rvinci_markers", 10);
   publisher_rvinci_ = nh_.advertise<rvinci_input_msg::rvinci_input>("/rvinci_input_update",10);
@@ -256,7 +249,8 @@ void rvinciDisplay::pubsubSetup()
   publisher_rgravity_ = nh_.advertise<std_msgs::Bool>("/MTMR/use_gravity_compensation", 10);
 }
 
-void rvinciDisplay::leftCallback(const sensor_msgs::ImageConstPtr& img){
+void rvinciDisplay::leftCallback(const sensor_msgs::ImageConstPtr& img)
+{
 
   if( buffer_[0] == NULL )
     { buffer_[0] = (unsigned char*)malloc( sizeof(unsigned char*)*img->height*img->step ); }
@@ -360,8 +354,8 @@ void rvinciDisplay::gravityCompensation()
     msg.data = "DVRK_READY";
   }
 
-  pub_robot_state_[_LEFT].publish(msg);
-  pub_robot_state_[_RIGHT].publish(msg);
+  // pub_robot_state_[_LEFT].publish(msg);
+  // pub_robot_state_[_RIGHT].publish(msg);
 }
 
 void rvinciDisplay::inputCallback(const rvinci_input_msg::rvinci_input::ConstPtr& r_input)
@@ -507,6 +501,7 @@ void rvinciDisplay::cameraReset()
     camera_[i]->setFixedYawAxis(true, camera_node_->getOrientation() * Ogre::Vector3::UNIT_Z);
     camera_[i]->setPosition(camera_offset_ - camera_ipd_ + 2*i*camera_ipd_);
     camera_[i]->lookAt(camera_node_->getPosition());
+
     cursor_[i].position.x = (2*i - 1)*0.6;
     cursor_[i].position.y = 0;
     cursor_[i].position.z = 0;
@@ -653,6 +648,11 @@ visualization_msgs::Marker rvinciDisplay::makeTextMessage(geometry_msgs::Pose p,
   return marker;
 }
 
+int rvinciDisplay::uniqueLineMarkerID() {
+    static int line_marker_id = 1000;  // Start from a number that does not conflict with other markers
+    return line_marker_id++;
+}
+
 visualization_msgs::Marker rvinciDisplay::makeLineMarker(geometry_msgs::Point p1, geometry_msgs::Point p2, int id)
 {
   visualization_msgs::Marker marker;
@@ -686,6 +686,17 @@ visualization_msgs::Marker rvinciDisplay::deleteMarker(int id)
   return marker;
 }
 
+bool rvinciDisplay::isMTM(bool left_released_, bool right_released_, bool coag_mode)
+{
+  if (left_released_ && right_released_ && !coag_mode)
+  {
+    return true;
+  }
+  return false;
+}
+
+
+
 void rvinciDisplay::publishMeasurementMarkers()
 {
   visualization_msgs::MarkerArray marker_arr;
@@ -698,197 +709,91 @@ void rvinciDisplay::publishMeasurementMarkers()
   distance_pose.orientation.x = distance_pose.orientation.y = distance_pose.orientation.z = 0.0;
   distance_pose.orientation.w = 1.0;
 
-  if (teleop_mode_ == false ) {  // MTM measurement
-    ROS_INFO_STREAM("\n************** MTM measurement **************\n");
-    marker_arr.markers.push_back( makeTextMessage(text_pose, "MTM MEASUREMENT", _STATUS_TEXT) );
+
+
+  if (!teleop_mode_) {  // MTM measurement
+    // ROS_INFO_STREAM("\n************** MTM measurement **************\n");
     switch (measurement_status_MTM)
     {
       case _BEGIN:
-        ROS_INFO_STREAM("BEGINNING");
-        marker_arr.markers.push_back( makeTextMessage(text_pose, "Beginning", _STATUS_TEXT) );
-        if (flag_delete_marker_)
-        {
-          marker_arr.markers.push_back( deleteMarker(_DELETE) );
-          flag_delete_marker_ = false;
-        }
+        marker_arr.markers.push_back( deleteMarker(_DELETE) );
         break;
       case _START_MEASUREMENT:
-        ROS_INFO_STREAM("USING" << marker_side_ << "GRIPPER");
-        marker_arr.markers.push_back( makeTextMessage(text_pose, "Start measurement", _STATUS_TEXT) );
-        marker_arr.markers.push_back( makeMarker(cursor_[marker_side_], _START_POINT) );
-        measurement_start_ = cursor_[marker_side_];
+        marker_arr.markers.push_back( makeTextMessage(text_pose, "Start MTM measurement", _STATUS_TEXT) );
+        marker_arr.markers.push_back(makeMarker(cursor_[_LEFT], _START_POINT));
+        marker_arr.markers.push_back(makeMarker(cursor_[_RIGHT], _END_POINT));
+        measurement_start_ = cursor_[_LEFT];
+        measurement_end_ = cursor_[_RIGHT];
         break;
+
       case _MOVING:
-        marker_arr.markers.push_back( makeTextMessage(text_pose, "Moving", _STATUS_TEXT) );
+        marker_arr.markers.push_back( makeTextMessage(text_pose, "MTM moving", _STATUS_TEXT) );
         marker_arr.markers.push_back( makeTextMessage(distance_pose, 
-        std::to_string(calculateDistance(measurement_start_, cursor_[marker_side_])*10)+" mm", _DISTANCE_TEXT) );
+          std::to_string(calculateDistance(cursor_[_LEFT], cursor_[_RIGHT]) * 1.2 *10) + " mm", _DISTANCE_TEXT));
         marker_arr.markers.push_back( makeMarker(measurement_start_, _START_POINT) );
         marker_arr.markers.push_back( makeMarker(cursor_[marker_side_], _END_POINT) );
-        ROS_INFO_STREAM("marker_side : "<< marker_side_);
-        marker_arr.markers.push_back( makeLineMarker(measurement_start_.position, cursor_[marker_side_].position, _LINE) );
-        measurement_end_ = cursor_[marker_side_];
+
+        marker_arr.markers.push_back(makeLineMarker(cursor_[_LEFT].position, cursor_[_RIGHT].position, 1));
+        measurement_start_ = cursor_[_LEFT];
+        measurement_end_ = cursor_[_RIGHT];
         break;
+
       case _END_MEASUREMENT:
-        marker_arr.markers.push_back( makeTextMessage(text_pose, "End measurement", _STATUS_TEXT) );
+        marker_arr.markers.push_back( makeTextMessage(text_pose, "MTM end measurement", _STATUS_TEXT) );
         marker_arr.markers.push_back( makeTextMessage(distance_pose, 
-        std::to_string(calculateDistance(measurement_start_, measurement_end_)*10)+" mm", _DISTANCE_TEXT) );
+          std::to_string(calculateDistance(measurement_start_, measurement_end_)*1.2*10)+" mm", _DISTANCE_TEXT) );
         marker_arr.markers.push_back( makeMarker(measurement_start_, _START_POINT) );
         marker_arr.markers.push_back( makeMarker(measurement_end_, _END_POINT) );
-        marker_arr.markers.push_back( makeLineMarker(measurement_start_.position, measurement_end_.position, _LINE) );
+        marker_arr.markers.push_back( makeLineMarker(measurement_start_.position, measurement_end_.position, uniqueLineMarkerID()));
         break;
     }
   } 
-  // TODO: PSM measurement
-  // To measure PSM, both left and right grippers should be closed and footpedal should be pressed
-  else if (teleop_mode_){  // PSM measurement
-    ROS_INFO_STREAM("\n&&&&&&&&&&&&&& PSM measurement &&&&&&&&&&&&&&\n");
+  // PSM measurement
+
+  else {
+    // PSM dual mode
     if (left_released_ == 0 && right_released_ == 0){
-      ROS_INFO_STREAM("\n double PSM");
+      // ROS_INFO_STREAM("\n double PSM mode");
+      switch(measurement_status_PSM_){
+        case _BEGIN:
+          marker_arr.markers.push_back( deleteMarker(_DELETE) );
+          break;
+        case _START_MEASUREMENT:
+          ROS_INFO_STREAM("PSM start: "<<PSM_pose_start_.position.x<<" "<<PSM_pose_start_.position.y<<" "<<PSM_pose_start_.position.z);
+          ROS_INFO_STREAM("PSM end: "<<PSM_pose_end_.position.x<<" "<<PSM_pose_end_.position.y<<" "<<PSM_pose_end_.position.z);
+          ROS_INFO_STREAM(calculateDistance(PSM_pose_start_, PSM_pose_end_));
+          marker_arr.markers.push_back( makeTextMessage(text_pose, "Start PSM dual measurement", _STATUS_TEXT) );
+          marker_arr.markers.push_back( makeTextMessage(distance_pose, 
+            std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000 )+" mm", _DISTANCE_TEXT) );
+          break;
+        case _END_MEASUREMENT:
+        marker_arr.markers.push_back( makeTextMessage(text_pose, "End PSM dual measurement", _STATUS_TEXT) );
+        marker_arr.markers.push_back( makeTextMessage(distance_pose, 
+          std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000 )+" mm", _DISTANCE_TEXT) );
+        break;
+
+      }
     }
     else if (left_released_ == 1 && right_released_ == 1){
-      ROS_INFO_STREAM("\n both grippers released");
+      ROS_INFO_STREAM("\n both gripper released");
+      marker_arr.markers.push_back( makeTextMessage(text_pose, "Both gripper released, no mode choosen!", _STATUS_TEXT) );
     }
     else {
-      
+      // TODO: PSM single mode
+      ROS_INFO_STREAM("\n single PSM mode");
+      measurement_status_PSM_ == _BEGIN;
     }
-    // switch(measurement_status_PSM_)
-    // {
-    //   case _BEGIN:
-    //     if (flag_delete_marker_)
-    //     {
-    //       marker_arr.markers.push_back( deleteMarker(_DELETE) );
-    //       flag_delete_marker_ = false;
-    //     }
-    //     break;
-    //   case _START_MEASUREMENT:
-    //     ROS_INFO_STREAM("PSM start: "<<PSM_pose_start_.position.x<<" "<<PSM_pose_start_.position.y<<" "<<PSM_pose_start_.position.z);
-    //     ROS_INFO_STREAM("PSM end: "<<PSM_pose_end_.position.x<<" "<<PSM_pose_end_.position.y<<" "<<PSM_pose_end_.position.z);
-    //     ROS_INFO_STREAM(calculateDistance(PSM_pose_start_, PSM_pose_end_));
-    //     marker_arr.markers.push_back( makeTextMessage(text_pose, "start measurement", _STATUS_TEXT) );
-    //     marker_arr.markers.push_back( makeTextMessage(distance_pose, 
-    //       std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000)+" mm", _DISTANCE_TEXT) );
-    //     break;
-    //   case _END_MEASUREMENT:
-    //     marker_arr.markers.push_back( makeTextMessage(text_pose, "end measurement", _STATUS_TEXT) );
-    //     marker_arr.markers.push_back( makeTextMessage(distance_pose, 
-    //       std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000)+" mm", _DISTANCE_TEXT) );
-    //     break;
-    // }
   }
-  else
-  {
-    ROS_INFO_STREAM("No measurement mode selected");
-  }
-
-  // PSM marker location test
-  // marker_arr.markers.push_back( makeMarker(PSM_pose_start_, _START_POINT) );
-  // marker_arr.markers.push_back( makeMarker(PSM_pose_end_, _END_POINT) );
+ 
 
   publisher_markers.publish(marker_arr);
 }
-
-void rvinciDisplay::updateCursorVisibility(const interaction_cursor_msgs::InteractionCursorUpdate& msg)
-{
-    // Update the "Show Cursor" property based on the received message
-    ROS_INFO_STREAM("Show Cursor: " << msg.show);
-    if (msg.show)
-    {
-        this->setProperty("Show Cursor", true);
-    }
-    else
-    {
-        this->setProperty("Show Cursor", false);
-    }
-}
-
+  
 
 void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg) 
 {
-    // buttons: 0 - released, 1 - pressed, 2 - quick tap
-    clutch_mode_ = msg->buttons[0];
-
-    if (clutch_mode_ == 2) {
-      clutch_quick_tap_ = true;
-
-      if (clutch_quick_tap_)
-      {
-        // Create the InteractionCursorUpdate message to update cursor state
-        interaction_cursor_msgs::InteractionCursorUpdate cursor_msg;
-
-        // Toggle the visibility of the cursor
-        cursor_visible_ = !cursor_visible_;
-        cursor_msg.show = cursor_visible_;  // Toggle visibility
-
-        // Set the pose of the cursor (this could be dynamically set based on your system's logic)
-        cursor_msg.pose.header.frame_id = context_->getFixedFrame().toStdString();
-        cursor_msg.pose.header.stamp = ros::Time::now();
-        cursor_msg.pose.pose.position.x = 0.0; 
-        cursor_msg.pose.pose.position.y = 0.0;
-        cursor_msg.pose.pose.position.z = 0.0;
-
-        // Required fields for button state and key event, adjust as necessary
-        cursor_msg.button_state = interaction_cursor_msgs::InteractionCursorUpdate::NONE;  // No buttons pressed
-        cursor_msg.key_event = interaction_cursor_msgs::InteractionCursorUpdate::NONE;  // No key event
-
-        visualization_msgs::Marker marker;
-        marker.header.frame_id = context_->getFixedFrame().toStdString();
-        marker.header.stamp = ros::Time::now();
-        marker.type = visualization_msgs::Marker::SPHERE;
-        marker.scale.x = 0.05;
-        marker.scale.y = 0.05;
-        marker.scale.z = 0.05;
-        marker.color.r = 0.0;
-        marker.color.g = 1.0;
-        marker.color.b = 0.0;
-        marker.color.a = 1.0;
-        cursor_msg.markers.push_back(marker);  // Add the marker to the message
-
-        ROS_INFO_STREAM("Clutch quick tap detected");
-
-        // Call the updateCursorVisibility function to process the message
-        updateCursorVisibility(cursor_msg);
-      }
-    }
-    else if (clutch_mode_ == 1)
-    {
-        if (clutch_press_start_time_.isZero())  // If this is the first press, start timing
-        {
-            clutch_press_start_time_ = ros::Time::now();
-        }
-        else
-        {
-            // Check if the clutch has been held for more than 3 seconds
-            if ((ros::Time::now() - clutch_press_start_time_).toSec() > 3.0)
-            { 
-              flag_delete_marker_ = true;
-              ROS_INFO_STREAM("!!!!!!Delete markers!!!!!!!!");
-              clutch_press_start_time_ = ros::Time();  // Reset the timing
-            }
-        }
-    }
-    else  // Clutch released
-    {
-      clutch_quick_tap_ = false;
-      clutch_press_start_time_ = ros::Time();  // Reset the timing
-    }
-}
-
-void rvinciDisplay::teleopCallback(const std_msgs::Bool::ConstPtr& msg)
-{
-    teleop_mode_ = msg->data;
-
-    if (teleop_mode_)
-    {
-      ROS_INFO_STREAM("Teleop enabled: PSM mode activated.");
-      // PSM_mm_ = true;
-      // MTM_mm_ = false;
-    }
-    else if (!teleop_mode_)
-    {
-      ROS_INFO_STREAM("Teleop disabled: MTM mode activated.");
-      // PSM_mm_ = false;
-      // MTM_mm_ = true;
-    }
+  // buttons: 0 - released, 1 - pressed, 2 - quick tap
+  rvmsg_.clutch = msg->buttons[0];
 }
 
 void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg) 
@@ -952,94 +857,48 @@ void rvinciDisplay::PSMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg,
     {
       case _LEFT: 
         PSM_pose_start_ = msg->pose;
-        PSM_pose_start_.position.x -= 0.000154096;
-        PSM_pose_start_.position.y -= 0.000118207;
+        // PSM_pose_start_.position.x -= 0.000154096;
+        // PSM_pose_start_.position.y -= 0.000118207;
         break;
       case _RIGHT: 
         PSM_pose_end_ = msg->pose;
-        PSM_pose_end_.position.x -= 0.000154096;
-        PSM_pose_end_.position.y -= 0.000118207;
+        // PSM_pose_end_.position.x -= 0.000154096;
+        // PSM_pose_end_.position.y -= 0.000118207;
         break;
     }
   }
-
-  // ROS_INFO_STREAM("actual PSM start: "<<msg->pose.position.x<<" "<<msg->pose.position.y<<" "<<msg->pose.position.z);
-  // ROS_INFO_STREAM("PSM end: "<<PSM_pose_end_.position.x<<" "<<PSM_pose_end_.position.y<<" "<<PSM_pose_end_.position.z);
-
-  // PSM marker location test
-  // if (start_measurement_PSM_[_LEFT] && start_measurement_PSM_[_RIGHT] && measurement_status_PSM_ == _START_MEASUREMENT)
-  // {
-    // switch (i)
-    // {
-    //   case _LEFT: 
-    //     PSM_pose_start_ = msg->pose; 
-    //     // PSM_pose_start_.position.x -= 0.15;
-    //     // PSM_pose_start_.position.y -= 0.15;
-    //     // PSM_pose_start_.position.z -= 0.15;
-    //     PSM_pose_start_.position.x *= -20;
-    //     PSM_pose_start_.position.y *= -20;
-    //     PSM_pose_start_.position.z *= 100;
-    //     break;
-    //   case _RIGHT: 
-    //     PSM_pose_end_ = msg->pose; 
-    //     // PSM_pose_end_.position.x -= 0.15;
-    //     // PSM_pose_end_.position.y -= 0.15;
-    //     // PSM_pose_end_.position.z -= 0.15;
-    //     PSM_pose_end_.position.x *= -20;
-    //     PSM_pose_end_.position.y *= -20;
-    //     PSM_pose_end_.position.z *= 100;
-    //     break;
-    // }
-  // }
-
-  // ROS_INFO_STREAM("PSM start: "<<PSM_pose_start_.position.x<<" "<<PSM_pose_start_.position.y<<" "<<PSM_pose_start_.position.z);
-  // ROS_INFO_STREAM("PSM end: "<<PSM_pose_end_.position.x<<" "<<PSM_pose_end_.position.y<<" "<<PSM_pose_end_.position.z);
 }
+
+void rvinciDisplay::teleopCallback(const std_msgs::Bool::ConstPtr& msg)
+{
+    teleop_mode_ = msg->data;
+    if (teleop_mode_) {
+        // Switch to PSM mode
+        ROS_INFO_STREAM("Teleop enabled: PSM mode activated.");
+    } else {
+        // Switch to MTM mode
+        ROS_INFO_STREAM("Teleop disabled: MTM mode activated.");
+    }
+}
+
+
 
 void rvinciDisplay::gripCallback(const std_msgs::Bool::ConstPtr& msg, int i)
-{
-  // MTM measurement
-  bool is_released = msg->data; // 0 - released, 1 - grabbed
+{ 
+  // 0 - grabbed, 1 - released
+  if ( i == _LEFT ){ 
+    left_released_ = msg->data;
+    left_grip_timestamp_ = ros::Time::now();
+    } 
+  else if ( i == _RIGHT){ 
+    right_released_ = msg->data;
+    right_grip_timestamp_ = ros::Time::now();
+    } 
+  ros::Duration time_difference = left_grip_timestamp_ - right_grip_timestamp_;
 
-  if (!rvmsg_.gripper[i].grab && is_released && marker_side_ == i && measurement_status_MTM != _END_MEASUREMENT)
-  {
-    measurement_status_MTM = _BEGIN;  //if gripper released during measurement, status back to BEGIN
-    if(i == _LEFT)
-    {
-      left_grab_ = false;
-    }
-    else
-    {
-      right_grab_ = false;
-    }
-  }
-
-  if (!is_released && measurement_status_MTM == _BEGIN) 
-  {
-    marker_side_ = i;  //gripper closed from another arm shouldnt interrupt the measurement process
-    if(i == _LEFT)
-    {
-      left_grab_ = true;
-    }
-    else
-    {
-      right_grab_ = true;
-    }
-  }
-
-  // PSM measurement
-  start_measurement_PSM_[i] = !is_released;
-  if (start_measurement_PSM_[_LEFT] && start_measurement_PSM_[_RIGHT] && measurement_status_PSM_ == _BEGIN)
-  {
-    measurement_status_PSM_ = _START_MEASUREMENT;
-  }
-  if (!start_measurement_PSM_[_LEFT] && !start_measurement_PSM_[_RIGHT] && measurement_status_PSM_ != _END_MEASUREMENT)
-  {
-    measurement_status_PSM_ = _BEGIN;
-  }
-
-  rvmsg_.gripper[i].grab = is_released;
 }
+  
+
 
 
 void rvinciDisplay::coagCallback(const sensor_msgs::Joy::ConstPtr& msg)
