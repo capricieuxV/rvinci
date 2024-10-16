@@ -776,7 +776,7 @@ void rvinciDisplay::publishMeasurementMarkers()
     }
     else if (left_released_ == 1 && right_released_ == 1){
       ROS_INFO_STREAM("\n both gripper released");
-      marker_arr.markers.push_back( makeTextMessage(text_pose, "Both gripper released, no mode choosen!", _STATUS_TEXT) );
+      marker_arr.markers.push_back( makeTextMessage(text_pose, "Both grippers released, no mode chosen!", _STATUS_TEXT) );
     }
     else {
       // TODO: PSM single mode
