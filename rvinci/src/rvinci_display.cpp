@@ -715,7 +715,7 @@ void rvinciDisplay::publishMeasurementMarkers()
     switch (measurement_status_MTM)
     {
       case _BEGIN:
-        marker_arr.markers.push_back(deleteMarker(_DELETE));
+        // marker_arr.markers.push_back(deleteMarker(_DELETE));
         break;
       case _START_MEASUREMENT:
         marker_arr.markers.push_back(makeTextMessage(text_pose, "Start MTM measurement", _STATUS_TEXT));
@@ -747,29 +747,26 @@ void rvinciDisplay::publishMeasurementMarkers()
       switch (measurement_status_PSM_)
       {
         case _BEGIN:
-          marker_arr.markers.push_back(deleteMarker(_DELETE));
+          // marker_arr.markers.push_back(deleteMarker(_DELETE));
           break;
         case _START_MEASUREMENT:
           marker_arr.markers.push_back(makeTextMessage(text_pose, "Start Dual PSM Measurement", _STATUS_TEXT));
-          marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
-          marker_arr.markers.push_back(makeMarker(PSM_pose_end_, _END_POINT));
-          measurement_start_ = PSM_pose_start_;
-          measurement_end_ = PSM_pose_end_;
+          marker_arr.markers.push_back( makeTextMessage(distance_pose, std::to_string( calculateDistance(PSM_pose_start_, PSM_pose_end_)*1000)+" mm", _DISTANCE_TEXT) );
+          marker_arr.markers.push_back( makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, 1));
           break;
         case _MOVING:
+          marker_arr.markers.push_back(deleteMarker(_DELETE));
           marker_arr.markers.push_back(makeTextMessage(text_pose, "PSM moving", _STATUS_TEXT));
           marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(PSM_pose_start_, PSM_pose_end_) * 1000) + " mm", _DISTANCE_TEXT));
-          marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
-          marker_arr.markers.push_back(makeMarker(PSM_pose_end_, _END_POINT));
-          marker_arr.markers.push_back(makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, 1));
-          measurement_start_ = PSM_pose_start_;
-          measurement_end_ = PSM_pose_end_;
+          // marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
+          // marker_arr.markers.push_back(makeMarker(PSM_pose_end_, _END_POINT));
+          // marker_arr.markers.push_back(makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, 1));
+          // measurement_start_ = PSM_pose_start_;
+          // measurement_end_ = PSM_pose_end_;
           break;
         case _END_MEASUREMENT:
           marker_arr.markers.push_back(makeTextMessage(text_pose, "Dual PSM end measurement", _STATUS_TEXT));
           marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(measurement_start_, measurement_end_) * 1000) + " mm", _DISTANCE_TEXT));
-          marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
-          marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
           marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, uniqueLineMarkerID()));
           break;
       }
@@ -778,7 +775,7 @@ void rvinciDisplay::publishMeasurementMarkers()
     switch (measurement_status_single_PSM_)
     {
       case _BEGIN:
-        marker_arr.markers.push_back(deleteMarker(_DELETE));
+        // marker_arr.markers.push_back(deleteMarker(_DELETE));
         break;
       case _START_MEASUREMENT:
         marker_arr.markers.push_back(makeTextMessage(text_pose, "Start Single PSM Measurement", _STATUS_TEXT));
@@ -797,15 +794,15 @@ void rvinciDisplay::publishMeasurementMarkers()
           measurement_end_ = PSM_pose_end_;
         }
         marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(measurement_start_, measurement_end_) * 1000) + " mm", _DISTANCE_TEXT));
-        marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
-        marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
+        // marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
+        // marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
         marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, 1));
         break;
       case _END_MEASUREMENT:
         marker_arr.markers.push_back(makeTextMessage(text_pose, "Single PSM end measurement", _STATUS_TEXT));
         marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(measurement_start_, measurement_end_) * 1000) + " mm", _DISTANCE_TEXT));
-        marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
-        marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
+        // marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
+        // marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
         marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, uniqueLineMarkerID()));
         break;
     }
