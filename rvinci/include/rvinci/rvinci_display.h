@@ -191,6 +191,7 @@ private:
   void PSMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg, int i);
   void gripCallback(const std_msgs::Bool::ConstPtr& grab, int i);
   void coagCallback(const sensor_msgs::Joy::ConstPtr& msg);
+  // void monoCallback(const sensor_msgs::Joy::ConstPtr& msg);
   void measurementCallback(const std_msgs::Bool::ConstPtr& msg);
   void cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr& msg);
 
@@ -230,7 +231,7 @@ private:
   bool MTM_mm_;
   bool PSM_mm_;
   bool teleop_mode_;
-  bool Mono_mode_;
+  bool mono_mode_;
   bool coag_init_;
   bool left_released_;
   bool right_released_;
@@ -242,9 +243,12 @@ private:
   bool show_axes_left_;
   bool show_cursor_left_;  
   bool start_measurement_PSM_[2];
+  bool PSM_initial_position_set_[2];
+
   bool single_psm_mode_;
   bool first_point_set_;
   bool flag_delete_marker_;
+
   
   
 
@@ -291,6 +295,7 @@ private:
   ros::Subscriber subscriber_teleop_;
   ros::Subscriber subscriber_camera_;
   ros::Subscriber subscriber_coag_;
+  ros::Subscriber subscriber_mono_;
   ros::Subscriber subscriber_MTML_;
   ros::Subscriber subscriber_MTMR_;
   ros::Subscriber subscriber_overlay_text_;
@@ -330,6 +335,7 @@ private:
   geometry_msgs::Pose measurement_end_;
   geometry_msgs::Pose PSM_pose_start_;
   geometry_msgs::Pose PSM_pose_end_;
+  geometry_msgs::Pose PSM_initial_pose_[2]; 
 
 
   rviz::FrameManager frame_manager_;
