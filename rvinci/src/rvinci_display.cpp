@@ -168,6 +168,7 @@ void rvinciDisplay::onInitialize()
 
   measurement_status_MTM = _BEGIN;
   measurement_status_PSM_ = _BEGIN;
+  measurement_status_single_PSM_ = _BEGIN;
 
   input_pos_[_LEFT].x = input_pos_[_LEFT].y = input_pos_[_LEFT].z = 0;
   input_pos_[_RIGHT].x = input_pos_[_RIGHT].y = input_pos_[_RIGHT].z = 0;
@@ -710,38 +711,6 @@ void rvinciDisplay::publishMeasurementMarkers()
   distance_pose.orientation.x = distance_pose.orientation.y = distance_pose.orientation.z = 0.0;
   distance_pose.orientation.w = 1.0;
 
-  // Add green marker for the left coordinate, updated with PSM_pose_start_
-  visualization_msgs::Marker green_marker;
-  green_marker.header.frame_id = "base_link";
-  green_marker.header.stamp = ros::Time::now();
-  green_marker.ns = "coordinate_marker";
-  green_marker.id = 100;
-  green_marker.type = visualization_msgs::Marker::SPHERE;
-  green_marker.action = visualization_msgs::Marker::ADD;
-  green_marker.pose = PSM_pose_start_;
-  green_marker.scale.x = 0.2;
-  green_marker.scale.y = 0.2;
-  green_marker.scale.z = 0.2;
-  green_marker.color.g = 1.0;
-  green_marker.color.a = 1.0;
-  marker_arr.markers.push_back(green_marker);
-
-  // Add red marker for the right coordinate, updated with PSM_pose_end_
-  visualization_msgs::Marker red_marker;
-  red_marker.header.frame_id = "base_link";
-  red_marker.header.stamp = ros::Time::now();
-  red_marker.ns = "coordinate_marker";
-  red_marker.id = 101;
-  red_marker.type = visualization_msgs::Marker::SPHERE;
-  red_marker.action = visualization_msgs::Marker::ADD;
-  red_marker.pose = PSM_pose_end_;
-  red_marker.scale.x = 0.2;
-  red_marker.scale.y = 0.2;
-  red_marker.scale.z = 0.2;
-  red_marker.color.r = 1.0;
-  red_marker.color.a = 1.0;
-  marker_arr.markers.push_back(red_marker);
-
   if (!teleop_mode_) {  // MTM measurement
     switch (measurement_status_MTM)
     {
@@ -773,8 +742,8 @@ void rvinciDisplay::publishMeasurementMarkers()
         break;
     }
   } 
-  else {  // PSM measurement
-    if (left_released_ == 0 && right_released_ == 0){
+  // Dual PSM measurement
+  else if (left_released_ == 0 && right_released_ == 0){
       switch (measurement_status_PSM_)
       {
         case _BEGIN:
@@ -805,17 +774,44 @@ void rvinciDisplay::publishMeasurementMarkers()
           break;
       }
     }
-    else if (left_released_ == 1 && right_released_ == 1){
-      marker_arr.markers.push_back(makeTextMessage(text_pose, "Both grippers released, no mode chosen!", _STATUS_TEXT));
+  else{  // Single PSM measurement
+    switch (measurement_status_single_PSM_)
+    {
+      case _BEGIN:
+        marker_arr.markers.push_back(deleteMarker(_DELETE));
+        break;
+      case _START_MEASUREMENT:
+        marker_arr.markers.push_back(makeTextMessage(text_pose, "Start Single PSM Measurement", _STATUS_TEXT));
+        if (left_released_ == 1) {
+          marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
+        } else {
+          marker_arr.markers.push_back(makeMarker(PSM_pose_end_, _START_POINT));
+        }
+        measurement_start_ = (left_released_ == 1) ? PSM_pose_start_ : PSM_pose_end_;
+        break;
+      case _MOVING:
+        marker_arr.markers.push_back(makeTextMessage(text_pose, "Single PSM moving", _STATUS_TEXT));
+        if (left_released_ == 1) {
+          measurement_end_ = PSM_pose_start_;
+        } else {
+          measurement_end_ = PSM_pose_end_;
+        }
+        marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(measurement_start_, measurement_end_) * 1000) + " mm", _DISTANCE_TEXT));
+        marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
+        marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
+        marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, 1));
+        break;
+      case _END_MEASUREMENT:
+        marker_arr.markers.push_back(makeTextMessage(text_pose, "Single PSM end measurement", _STATUS_TEXT));
+        marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(measurement_start_, measurement_end_) * 1000) + " mm", _DISTANCE_TEXT));
+        marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
+        marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
+        marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, uniqueLineMarkerID()));
+        break;
     }
-    else {
-      marker_arr.markers.push_back(makeTextMessage(text_pose, "PSM single mode activated", _STATUS_TEXT));
-      // Re-add markers to prevent them from disappearing
-      marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
-      marker_arr.markers.push_back(makeMarker(PSM_pose_end_, _END_POINT));
-    }
-  }
- 
+  } 
+     
+     
   publisher_markers.publish(marker_arr);
 }
 
@@ -836,8 +832,9 @@ void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg)
   if (msg->buttons[0] == 2) camera_quick_tap_ = true;
   else camera_quick_tap_ = false;
 
-    if (camera_quick_tap_){
-      if (!teleop_mode_)  // MTM mode
+  if (camera_quick_tap_)
+  {
+    if (!teleop_mode_)  // MTM mode
     {
       switch (measurement_status_MTM)
       {
@@ -855,7 +852,7 @@ void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg)
           break;
       }
     }
-    else  // PSM mode
+    else if (teleop_mode_ && left_released_ == 0 && right_released_ == 0) // Dual PSM mode
     {
       switch (measurement_status_PSM_)
       {
@@ -873,8 +870,34 @@ void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg)
           break;
       }
     }
+    else if (teleop_mode_ && (left_released_ == 1 || right_released_ == 1)) // Single PSM mode
+    {
+      switch (measurement_status_single_PSM_)
+      {
+        case _BEGIN: 
+          measurement_status_single_PSM_ = _START_MEASUREMENT; 
+          break;
+        case _START_MEASUREMENT: 
+          measurement_status_single_PSM_ = _MOVING; 
+          break;
+        case _MOVING: 
+          measurement_status_single_PSM_ = _END_MEASUREMENT; 
+          break;
+        case _END_MEASUREMENT:
+          measurement_status_single_PSM_ = _BEGIN;
+          break;
+      }
+    }
   }
+  // else if (msg->buttons[0] == 1)  // Long press
+  // {
+  //   if (measurement_status_PSM_ == _MOVING && (left_released_ == 1 || right_released_ == 1))
+  //   {
+  //     measurement_status_PSM_ = _ENDING;
+  //   }
+  // }
 }
+
 
 void rvinciDisplay::MTMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg, int i)
 {
@@ -909,6 +932,21 @@ void rvinciDisplay::PSMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg,
             PSM_initial_position_set_[_RIGHT] = true;
           }
           PSM_pose_end_ = msg->pose; // Directly update the end pose
+          break;
+      }
+    }
+  }
+  else 
+  {
+    if (measurement_status_single_PSM_ == _START_MEASUREMENT || measurement_status_single_PSM_ == _MOVING)
+    {
+      switch (i)
+      {
+        case _LEFT: 
+          PSM_pose_start_ = msg->pose; // Directly update the start pose for single mode
+          break;
+        case _RIGHT: 
+          PSM_pose_end_ = msg->pose; // Directly update the end pose for single mode
           break;
       }
     }

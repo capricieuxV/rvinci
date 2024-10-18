@@ -255,6 +255,7 @@ private:
   int marker_side_;
   MeasurementApp measurement_status_MTM;
   MeasurementApp measurement_status_PSM_;
+  MeasurementApp measurement_status_single_PSM_;
   double distance_measured_;
 
   static Ogre::uint32 const LEFT_VIEW = 1;
@@ -336,6 +337,7 @@ private:
   geometry_msgs::Pose PSM_pose_start_;
   geometry_msgs::Pose PSM_pose_end_;
   geometry_msgs::Pose PSM_initial_pose_[2]; 
+  geometry_msgs::Pose PSM_pose_single_;
 
 
   rviz::FrameManager frame_manager_;
