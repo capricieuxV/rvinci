@@ -191,6 +191,7 @@ private:
   void PSMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg, int i);
   void gripCallback(const std_msgs::Bool::ConstPtr& grab, int i);
   void coagCallback(const sensor_msgs::Joy::ConstPtr& msg);
+  // void monoCallback(const sensor_msgs::Joy::ConstPtr& msg);
   void measurementCallback(const std_msgs::Bool::ConstPtr& msg);
   void cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr& msg);
 
@@ -209,7 +210,8 @@ private:
   visualization_msgs::Marker makeMarker(geometry_msgs::Pose p, int id);
   visualization_msgs::Marker makeLineMarker(geometry_msgs::Point p1, geometry_msgs::Point p2, int id);
   visualization_msgs::Marker makeTextMessage(geometry_msgs::Pose p, std::string msg, int id);
-  visualization_msgs::Marker deleteAllMarkers();
+  visualization_msgs::Marker deleteMarker(int id);
+  int uniqueLineMarkerID();
 
   //measurement
   void toggleDualHandMode();
@@ -232,7 +234,7 @@ private:
   bool MTM_mm_;
   bool PSM_mm_;
   bool teleop_mode_;
-  bool Mono_mode_;
+  bool mono_mode_;
   bool coag_init_;
   bool cursor_visible_;
   bool camera_quick_tap_;
@@ -245,9 +247,14 @@ private:
   bool start_measurement_PSM_[2];
   bool PSM_initial_position_set_[2];
 
+  bool single_psm_mode_;
+  bool first_point_set_;
+  bool flag_delete_marker_;
+
   int marker_side_;
   MeasurementApp measurement_status_MTM;
   MeasurementApp measurement_status_PSM_;
+  MeasurementApp measurement_status_single_PSM_;
   double distance_measured_;
 
   static Ogre::uint32 const LEFT_VIEW = 1;
@@ -285,6 +292,7 @@ private:
   ros::Subscriber subscriber_teleop_;
   ros::Subscriber subscriber_camera_;
   ros::Subscriber subscriber_coag_;
+  ros::Subscriber subscriber_mono_;
   ros::Subscriber subscriber_MTML_;
   ros::Subscriber subscriber_MTMR_;
   ros::Subscriber subscriber_overlay_text_;
@@ -327,6 +335,7 @@ private:
   geometry_msgs::Pose PSM_pose_start_;
   geometry_msgs::Pose PSM_pose_end_;
   geometry_msgs::Pose PSM_initial_pose_[2]; 
+  geometry_msgs::Pose PSM_pose_single_;
 
   rviz::FrameManager frame_manager_;
   std_msgs::Header cam_header_;
