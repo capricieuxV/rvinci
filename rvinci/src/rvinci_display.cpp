@@ -167,7 +167,7 @@ void rvinciDisplay::onInitialize()
   show_cursor_right_ = false;
   show_axes_left_ = true;
   show_cursor_left_ = false;  
-  Mono_mode_ = false;
+  
   coag_init_ = true;
   flag_delete_marker_ = false;
   left_released_ = false;
@@ -680,15 +680,16 @@ visualization_msgs::Marker rvinciDisplay::makeLineMarker(geometry_msgs::Point p1
     return marker;
 }
 
-visualization_msgs::Marker rvinciDisplay::deleteAllMarkers() {
-    visualization_msgs::Marker marker;
-    marker.header.frame_id = "base_link";
-    marker.header.stamp = ros::Time::now();
-    marker.ns = ""; // Clear the namespace to target all markers.
-    marker.id = 0; // ID set to zero, not relevant when using DELETEALL.
-    marker.action = visualization_msgs::Marker::DELETEALL; // Delete all markers.
+visualization_msgs::Marker rvinciDisplay::deleteMarker(int id)
+{
+  visualization_msgs::Marker marker;
+  marker.header.frame_id = "base_link";
+  marker.header.stamp = ros::Time::now();
+  marker.ns = "basic_shapes";
+  marker.id = id;
+  marker.action = visualization_msgs::Marker::DELETEALL;
 
-    return marker;
+  return marker;
 }
 
 
@@ -814,24 +815,6 @@ void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg)
 
     if (msg->buttons[0] == 2) clutch_quick_tap_ = true;
     else clutch_quick_tap_ = false;
-}
-
-void rvinciDisplay::teleopCallback(const std_msgs::Bool::ConstPtr& msg)
-{
-    teleop_mode_ = msg->data;
-
-    if (teleop_mode_)
-    {
-      // ROS_INFO_STREAM("PSM measurement mode");
-      PSM_mm_ = true;
-      MTM_mm_ = false;
-    }
-    else if (!teleop_mode_)
-    {
-      // ROS_INFO_STREAM("MTM measurement mode");
-      PSM_mm_ = false;
-      MTM_mm_ = true;
-    }
 }
 
 void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg) 
@@ -994,13 +977,13 @@ void rvinciDisplay::gripCallback(const std_msgs::Bool::ConstPtr& msg, int i)
   // 0 - grabbed, 1 - released
   if ( i == _LEFT ){ 
     left_released_ = msg->data;
-    left_grip_timestamp_ = ros::Time::now();
+    // left_grip_timestamp_ = ros::Time::now();
     } 
   else if ( i == _RIGHT){ 
     right_released_ = msg->data;
-    right_grip_timestamp_ = ros::Time::now();
+    // right_grip_timestamp_ = ros::Time::now();
     } 
-  ros::Duration time_difference = left_grip_timestamp_ - right_grip_timestamp_;
+  // ros::Duration time_difference = left_grip_timestamp_ - right_grip_timestamp_;
 
 }
   
@@ -1014,14 +997,14 @@ void rvinciDisplay::coagCallback(const sensor_msgs::Joy::ConstPtr& msg)
     return;
   }
 
-  if (coag_mode_ == 1) { 
-    cursor_[_LEFT].position.x -= 10;
-    cursor_[_RIGHT].position.x -= 10;
+  // if (coag_mode_ == 1) { 
+  //   cursor_[_LEFT].position.x -= 10;
+  //   cursor_[_RIGHT].position.x -= 10;
 
-    // in Mono mode
-    Mono_mode_ = true;
-    flag_delete_marker_ = true;
-  }
+  //   // in Mono mode
+  //   Mono_mode_ = true;
+  //   flag_delete_marker_ = true;
+  // }
   // else if (coag_mode_ == 0){
   //   Mono_mode_ = false;
   //   int grab[2];
