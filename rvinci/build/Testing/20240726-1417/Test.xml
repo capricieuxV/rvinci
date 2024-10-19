@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Site BuildName="(empty)"
+	BuildStamp="20240726-1417-Experimental"
+	Name="lcsr-dvrk-05"
+	Generator="ctest-3.16.3"
+	CompilerName="/usr/bin/c++"
+	CompilerVersion="9.4.0"
+	OSName="Linux"
+	Hostname="lcsr-dvrk-05"
+	OSRelease="5.4.0-190-generic"
+	OSVersion="#210-Ubuntu SMP Fri Jul 5 17:03:38 UTC 2024"
+	OSPlatform="x86_64"
+	Is64Bits="1"
+	VendorString="GenuineIntel"
+	VendorID="Intel Corporation"
+	FamilyID="6"
+	ModelID="85"
+	ProcessorCacheSize="11264"
+	NumberOfLogicalCPU="16"
+	NumberOfPhysicalCPU="8"
+	TotalVirtualMemory="2047"
+	TotalPhysicalMemory="39792"
+	LogicalProcessorsPerPhysical="2"
+	ProcessorClockFrequency="3233.87"
+	>
+	<Testing>
+		<StartDateTime>Jul 26 10:17 EDT</StartDateTime>
+		<StartTestTime>1722003449</StartTestTime>
+		<TestList/>
+		<EndDateTime>Jul 26 10:17 EDT</EndDateTime>
+		<EndTestTime>1722003449</EndTestTime>
+		<ElapsedMinutes>0</ElapsedMinutes>
+	</Testing>
+</Site>
