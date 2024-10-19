@@ -245,7 +245,6 @@ private:
   bool show_axes_left_;
   bool show_cursor_left_;  
   bool start_measurement_PSM_[2];
-  bool PSM_initial_position_set_[2];
 
   bool single_psm_mode_;
   bool first_point_set_;
@@ -334,8 +333,6 @@ private:
   geometry_msgs::Pose measurement_end_;
   geometry_msgs::Pose PSM_pose_start_;
   geometry_msgs::Pose PSM_pose_end_;
-  geometry_msgs::Pose PSM_initial_pose_[2]; 
-  geometry_msgs::Pose PSM_pose_single_;
 
   rviz::FrameManager frame_manager_;
   std_msgs::Header cam_header_;
