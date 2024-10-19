@@ -170,10 +170,6 @@ void rvinciDisplay::onInitialize()
   
   coag_init_ = true;
   flag_delete_marker_ = false;
-  left_released_ = false;
-  right_released_ = false;
-  PSM_initial_position_set_[_LEFT] = false;
-  PSM_initial_position_set_[_RIGHT] = false;
 
   measurement_status_MTM = _BEGIN;
   measurement_status_PSM_ = _BEGIN;
@@ -915,47 +911,46 @@ void rvinciDisplay::MTMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg,
 // }
 void rvinciDisplay::PSMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg, int i)
 {
-  // Ensure the initial position is set properly and update the current positions
-  if (left_released_ == 0 && right_released_ == 0)
-  {
-    if (measurement_status_PSM_ == _START_MEASUREMENT || measurement_status_PSM_ == _MOVING)
+    // Check if we are in dual-hand mode or single-hand mode
+    if (dual_hand_mode_)
     {
-      switch (i)
-      {
-        case _LEFT: 
-          if (!PSM_initial_position_set_[_LEFT])
-          {
-            PSM_initial_pose_[_LEFT] = msg->pose;
-            PSM_initial_position_set_[_LEFT] = true;
-          }
-          PSM_pose_start_ = msg->pose; // Directly update the start pose
-          break;
-        case _RIGHT: 
-          if (!PSM_initial_position_set_[_RIGHT])
-          {
-            PSM_initial_pose_[_RIGHT] = msg->pose;
-            PSM_initial_position_set_[_RIGHT] = true;
-          }
-          PSM_pose_end_ = msg->pose; // Directly update the end pose
-          break;
-      }
+        // In dual-hand mode, update both left and right poses if they are both engaged
+        if (start_measurement_PSM_[_LEFT] && start_measurement_PSM_[_RIGHT] && measurement_status_PSM_ == _START_MEASUREMENT)
+        {
+            switch (i)
+            {
+                case _LEFT: 
+                    PSM_pose_start_ = msg->pose;
+                    PSM_pose_start_.position.x -= 0.000154096;
+                    PSM_pose_start_.position.y -= 0.000118207;
+                    break;
+                case _RIGHT: 
+                    PSM_pose_end_ = msg->pose;
+                    PSM_pose_end_.position.x -= 0.000154096;
+                    PSM_pose_end_.position.y -= 0.000118207;
+                    break;
+            }
+        }
     }
-  }
-  else 
-  {
-    if (measurement_status_single_PSM_ == _START_MEASUREMENT || measurement_status_single_PSM_ == _MOVING)
+    else  // Single-hand mode
     {
-      switch (i)
-      {
-        case _LEFT: 
-          PSM_pose_start_ = msg->pose; // Directly update the start pose for single mode
-          break;
-        case _RIGHT: 
-          PSM_pose_end_ = msg->pose; // Directly update the end pose for single mode
-          break;
-      }
+        // In single-hand mode, update only the gripping hand's pose
+        if ((start_measurement_PSM_[_LEFT] || start_measurement_PSM_[_RIGHT]) && measurement_status_PSM_ == _START_MEASUREMENT)
+        {
+            if (i == _LEFT && start_measurement_PSM_[_LEFT])  // Only update if the left gripper is gripping
+            {
+                PSM_pose_start_ = msg->pose;
+                PSM_pose_start_.position.x -= 0.000154096;
+                PSM_pose_start_.position.y -= 0.000118207;
+            }
+            else if (i == _RIGHT && start_measurement_PSM_[_RIGHT])  // Only update if the right gripper is gripping
+            {
+                PSM_pose_end_ = msg->pose;
+                PSM_pose_end_.position.x -= 0.000154096;
+                PSM_pose_end_.position.y -= 0.000118207;
+            }
+        }
     }
-  }
 }
 
 void rvinciDisplay::teleopCallback(const std_msgs::Bool::ConstPtr& msg)
