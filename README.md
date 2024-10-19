@@ -62,7 +62,7 @@ To launch rvinci with interactive mode:
 roslaunch rvinci rvinci_interactive.launch
 ```
 
-# How to calibrate and move the calibration file (.yaml) to correct directory
+## How to calibrate and move the calibration file (.yaml) to correct directory
 First, bring up the stereo camera:
 ```bash
 roslaunch dvrk_video jhu_daVinci_video.launch
