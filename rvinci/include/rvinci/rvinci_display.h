@@ -172,9 +172,9 @@ protected Q_SLOTS:
   //!Sets up ROS subscribers and publishers
   virtual void pubsubSetup();
   //!Toggle for DVRK Gravity Compensation state
-  virtual void updateGravityCompensationMode();
-  virtual void updateCursorVisibility();
-  virtual void updateCursorAxisVisibility();
+  virtual void gravityCompensation();
+  // virtual void updateCursorVisibility();
+  // virtual void updateCursorAxisVisibility();
 
 private:
   //!Creates viewports and cameras.
@@ -251,7 +251,7 @@ private:
 
   bool single_psm_mode_;
   bool first_point_set_;
-  bool flag_delete_marker_;
+  
 
   int marker_side_;
   MeasurementApp measurement_status_MTM;

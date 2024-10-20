@@ -667,19 +667,6 @@ visualization_msgs::Marker rvinciDisplay::makeLineMarker(geometry_msgs::Point p1
   return marker;
 }
 
-
-
-visualization_msgs::Marker rvinciDisplay::deleteAllMarkers() {
-    visualization_msgs::Marker marker;
-    marker.header.frame_id = "base_link";
-    marker.header.stamp = ros::Time::now();
-    marker.ns = ""; // Clear the namespace to target all markers.
-    marker.id = 0; // ID set to zero, not relevant when using DELETEALL.
-    marker.action = visualization_msgs::Marker::DELETEALL; // Delete all markers.
-
-    return marker;
-}
-
 visualization_msgs::Marker rvinciDisplay::deleteAllMarkers() {
     visualization_msgs::Marker marker;
     marker.header.frame_id = "base_link";
