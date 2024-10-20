@@ -982,13 +982,13 @@ void rvinciDisplay::gripCallback(const std_msgs::Bool::ConstPtr& msg, int i)
   // 0 - grabbed, 1 - released
   if ( i == _LEFT ){ 
     left_released_ = msg->data;
-    left_grip_timestamp_ = ros::Time::now();
+    
     } 
   else if ( i == _RIGHT){ 
     right_released_ = msg->data;
-    right_grip_timestamp_ = ros::Time::now();
+    
     } 
-  ros::Duration time_difference = left_grip_timestamp_ - right_grip_timestamp_;
+  
 
 }
   

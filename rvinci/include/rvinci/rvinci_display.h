@@ -232,6 +232,7 @@ private:
   bool wrench_published_;
   bool gravity_published_;
   bool left_grab_, right_grab_;
+  bool left_released_, right_released_;
   bool MTM_mm_;
   bool PSM_mm_;
   bool teleop_mode_;
