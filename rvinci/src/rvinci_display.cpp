@@ -71,7 +71,7 @@ rvinciDisplay::rvinciDisplay()
   camera_[_LEFT] = 0;
   camera_[_RIGHT]= 0;
 
-  camera_ipd_ = Ogre::Vector3(1,1,1);
+  camera_ipd_ = Ogre::Vector3(0.0,0.0,0.0);
 
   buffer_[0] = NULL;
   buffer_[1] = NULL;
