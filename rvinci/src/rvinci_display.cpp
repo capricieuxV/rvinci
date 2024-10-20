@@ -71,7 +71,7 @@ rvinciDisplay::rvinciDisplay()
   camera_[_LEFT] = 0;
   camera_[_RIGHT]= 0;
 
-  camera_ipd_ = Ogre::Vector3(0.03,0.0,0.0);
+  camera_ipd_ = Ogre::Vector3(0.0,0.0,0.0);
 
   buffer_[0] = NULL;
   buffer_[1] = NULL;
@@ -401,7 +401,7 @@ void rvinciDisplay::inputCallback(const rvinci_input_msg::rvinci_input::ConstPtr
       grab[i] = getaGrip(r_input->gripper[i].grab, i);
     }
 
-    prop_cam_focus_->setVector(input_pos_[_RIGHT]);
+    // prop_cam_focus_->setVector(input_pos_[_RIGHT]);
     publishCursorUpdate(grab);
 
     /*
@@ -917,7 +917,7 @@ void rvinciDisplay::MTMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg,
   rvmsg_.gripper[i].pose = msg->pose;
   rvmsg_.gripper[i].pose.position.x *= -1;
   rvmsg_.gripper[i].pose.position.y *= -1;
-  // rvmsg_.gripper[i].pose.position.z -= 0.4;
+  rvmsg_.gripper[i].pose.position.z -= 0.4;
 }
 
 void rvinciDisplay::PSMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg, int i)
@@ -1003,8 +1003,8 @@ void rvinciDisplay::coagCallback(const sensor_msgs::Joy::ConstPtr& msg)
   }
 
   if (coag_mode_ == 1) { 
-    // cursor_[_LEFT].position.x -= 10;
-    // cursor_[_RIGHT].position.x -= 10;
+    cursor_[_LEFT].position.x -= 10;
+    cursor_[_RIGHT].position.x -= 10;
 
     // in Mono mode
     Mono_mode_ = true;
@@ -1013,8 +1013,8 @@ void rvinciDisplay::coagCallback(const sensor_msgs::Joy::ConstPtr& msg)
   else if (coag_mode_ == 0){
     Mono_mode_ = false;
     int grab[2];
-    // cursor_[_LEFT].position.x += 10;
-    // cursor_[_RIGHT].position.x += 10;
+    cursor_[_LEFT].position.x += 10;
+    cursor_[_RIGHT].position.x += 10;
     grab[_LEFT] = 0;
     grab[_RIGHT] = 0;
     publishCursorUpdate(grab);
