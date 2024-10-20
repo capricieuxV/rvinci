@@ -27,6 +27,8 @@
  */
 
 #include "rvinci/rvinci_display.h"
+#include <fstream>
+#include <ctime>
 
 #define _LEFT 0
 #define _RIGHT 1
@@ -679,8 +681,6 @@ visualization_msgs::Marker rvinciDisplay::makeLineMarker(geometry_msgs::Point p1
   return marker;
 }
 
-
-
 visualization_msgs::Marker rvinciDisplay::deleteAllMarkers() {
     visualization_msgs::Marker marker;
     marker.header.frame_id = "base_link";
@@ -691,6 +691,37 @@ visualization_msgs::Marker rvinciDisplay::deleteAllMarkers() {
 
     return marker;
 }
+
+// void rvinciDisplay::saveMeasurementData(double distance, const std::string &mode)
+// {
+//   static std::vector<double> measurement_data;
+//   static time_t end_mode_timestamp = time(0);
+
+//   // Record data if 20 seconds have passed in END mode
+//   if (difftime(time(0), end_mode_timestamp) >= 20)
+//   {
+//     end_mode_timestamp = time(0);
+//     measurement_data.push_back(distance);
+
+//     if (measurement_data.size() == 8)  // Complete set of data for a user
+//     {
+//       std::ofstream data_file;
+//       data_file.open("data.txt", std::ios::out | std::ios::app);
+//       if (data_file.is_open())
+//       {
+//         for (size_t i = 0; i < measurement_data.size(); ++i)
+//         {
+//           data_file << measurement_data[i];
+//           if (i < measurement_data.size() - 1)
+//             data_file << ", ";
+//         }
+//         data_file << std::endl;
+//       }
+//       data_file.close();
+//       measurement_data.clear();
+//     }
+//   }
+// }
 
 void rvinciDisplay::publishMeasurementMarkers()
 {
@@ -745,6 +776,7 @@ void rvinciDisplay::publishMeasurementMarkers()
         marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
         marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
         marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, uniqueLineMarkerID()));
+        // saveMeasurementData(calculateDistance(measurement_start_, measurement_end_), "MTM");
         break;
     }
   } 
@@ -777,6 +809,7 @@ void rvinciDisplay::publishMeasurementMarkers()
           // marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
           // marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
           // marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, uniqueLineMarkerID()));
+          // saveMeasurementData(calculateDistance(measurement_start_, measurement_end_), "Dual PSM");
           break;
       }
     }
@@ -809,6 +842,7 @@ void rvinciDisplay::publishMeasurementMarkers()
         // marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
         // marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
         // marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, uniqueLineMarkerID()));
+        // saveMeasurementData(calculateDistance(measurement_start_, measurement_end_), "Single PSM");
         break;
     }
   } 
