@@ -1002,8 +1002,8 @@ void rvinciDisplay::coagCallback(const sensor_msgs::Joy::ConstPtr& msg)
   }
 
   if (coag_mode_ == 1) { 
-    cursor_[_LEFT].position.x -= 10;
-    cursor_[_RIGHT].position.x -= 10;
+    // cursor_[_LEFT].position.x -= 10;
+    // cursor_[_RIGHT].position.x -= 10;
 
     // in Mono mode
     Mono_mode_ = true;
@@ -1012,8 +1012,8 @@ void rvinciDisplay::coagCallback(const sensor_msgs::Joy::ConstPtr& msg)
   else if (coag_mode_ == 0){
     Mono_mode_ = false;
     int grab[2];
-    cursor_[_LEFT].position.x += 10;
-    cursor_[_RIGHT].position.x += 10;
+    // cursor_[_LEFT].position.x += 10;
+    // cursor_[_RIGHT].position.x += 10;
     grab[_LEFT] = 0;
     grab[_RIGHT] = 0;
     publishCursorUpdate(grab);
