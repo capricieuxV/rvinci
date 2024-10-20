@@ -834,13 +834,13 @@ void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg)
   // }
 
   // TODO: use clutch for debugging for now
-  ROS_INFO_STREAM("Camera Left Position: " << camera_[_LEFT]->getPosition());
-  ROS_INFO_STREAM("Camera Right Position: " << camera_[_RIGHT]->getPosition());
-  ROS_INFO_STREAM("Camera Left Orientation: " << camera_[_LEFT]->getOrientation());
-  ROS_INFO_STREAM("Camera Right Orientation: " << camera_[_RIGHT]->getOrientation());
+//   ROS_INFO_STREAM("Camera Left Position: " << camera_[_LEFT]->getPosition());
+//   ROS_INFO_STREAM("Camera Right Position: " << camera_[_RIGHT]->getPosition());
+//   ROS_INFO_STREAM("Camera Left Orientation: " << camera_[_LEFT]->getOrientation());
+//   ROS_INFO_STREAM("Camera Right Orientation: " << camera_[_RIGHT]->getOrientation());
 
-  ROS_INFO_STREAM("Projection Matrix: " << proj_matrix);
-  ROS_INFO_STREAM("Marker Position: " << marker.pose.position.x << ", " << marker.pose.position.y << ", " << marker.pose.position.z);
+//   ROS_INFO_STREAM("Projection Matrix: " << proj_matrix);
+//   ROS_INFO_STREAM("Marker Position: " << marker.pose.position.x << ", " << marker.pose.position.y << ", " << marker.pose.position.z);
 }
 
 void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg) 
