@@ -57,23 +57,21 @@ rvinciDisplay::rvinciDisplay()
   prop_cam_reset_ = new rviz::BoolProperty("Camera Reset",false,
                                            "Reset camera and cursor position", this, SLOT (cameraReset()));
   prop_gravity_comp_ = new rviz::BoolProperty("Release da Vinci",false,
-                                           "Put da Vinci in Gravity Compensation mode", this, SLOT (updateGravityCompensationMode()));
-  prop_manual_coords_ = new rviz::BoolProperty("Use typed coordinates",false,
-                                              "Camera movement controlled by typed coordinates",this);
+                                           "Put da Vinci in Gravity Compensation mode", this, SLOT (gravityCompensation()));
+
+//  prop_manual_coords_ = new rviz::BoolProperty("Use typed coordinates",false,
+//                                               "Camera movement controlled by typed coordinates",this);
+
   prop_cam_focus_ = new rviz::VectorProperty("Camera Focus",Ogre::Vector3(0,0,0),
                                              "Focus Point of Camera",this);
   prop_camera_posit_ = new rviz::VectorProperty("Camera Position",camera_offset_,
                                                  "Position of scene node to world base frame",this);
   property_camrot_ = new rviz::QuaternionProperty("Camera Orientation",Ogre::Quaternion(0,0,0,1),
                                                   "Orientation of the camera",this);
-  property_show_cursor_ = new rviz::BoolProperty("Show Cursor",false,
-                                                 "Show the cursor in the scene",this);
-  property_show_cursor_axis_ = new rviz::BoolProperty("Show Cursor Axis",true,
-                                                      "Show the cursor axis in the scene",this);
   camera_[_LEFT] = 0;
   camera_[_RIGHT]= 0;
 
-  camera_ipd_ = Ogre::Vector3(0.0, 0.0, 0.0); // inter-pupillary distance
+  camera_ipd_ = Ogre::Vector3(0.03,0.0,0.0);
 
   buffer_[0] = NULL;
   buffer_[1] = NULL;
@@ -115,12 +113,10 @@ rvinciDisplay::~rvinciDisplay()
   window_R_ = 0;
   delete render_widget_;
   delete render_widget_R_;
-  delete prop_manual_coords_;
+//  delete prop_manual_coords_;
   delete prop_cam_focus_;
   delete prop_camera_posit_;
   delete prop_input_scalar_;
-  delete property_show_cursor_;
-  delete property_show_cursor_axis_;
 }
 
 void rvinciDisplay::onInitialize()
@@ -180,7 +176,6 @@ void rvinciDisplay::onInitialize()
   input_pos_[_LEFT].x = input_pos_[_LEFT].y = input_pos_[_LEFT].z = 0;
   input_pos_[_RIGHT].x = input_pos_[_RIGHT].y = input_pos_[_RIGHT].z = 0;
 }
-
 void rvinciDisplay::update(float wall_dt, float ros_dt)
 {
   if( backgroundImage_[0] != NULL ){
@@ -354,56 +349,20 @@ void rvinciDisplay::rightCallback(const sensor_msgs::ImageConstPtr& img){
 
 }
 
-void rvinciDisplay::updateGravityCompensationMode() 
+void rvinciDisplay::gravityCompensation()
 {
-  // update the gravity compensation state of the da Vinci
-  std_msgs::Bool msg;
-  msg.data = prop_gravity_comp_->getBool();
-
-  if (msg.data) {
-    ROS_INFO_STREAM("Releasing da Vinci");
-    gravity_published_ = true;
-
-  } else {
-    ROS_INFO_STREAM("Engaging da Vinci");
-    gravity_published_ = false;
-  }
-}
-
-void rvinciDisplay::updateCursorVisibility()
-{
-  bool show_cursor = property_show_cursor_->getBool();
-  for (int i = 0; i < 2; ++i)
+  std_msgs::String msg;
+  if (prop_gravity_comp_->getBool())
   {
-    if (show_cursor)
-    {
-      // Show the cursor
-      cursor_[i].visible = true;
-    }
-    else
-    {
-      // Hide the cursor
-      cursor_[i].visible = false;
-    }
+    msg.data = "DVRK_GRAVITY_COMPENSATION";
   }
-}
-
-void rvinciDisplay::updateCursorAxisVisibility()
-{
-  bool show_cursor_axis = property_show_cursor_axis_->getBool();
-  for (int i = 0; i < 2; ++i)
+  else
   {
-    if (show_cursor_axis)
-    {
-      // Show the axis representation for the cursor
-      cursor_axis_[i]->setVisible(true);
-    }
-    else
-    {
-      // Hide the axis representation for the cursor
-      cursor_axis_[i]->setVisible(false);
-    }
+    msg.data = "DVRK_READY";
   }
+
+  // pub_robot_state_[_LEFT].publish(msg);
+  // pub_robot_state_[_RIGHT].publish(msg);
 }
 
 void rvinciDisplay::inputCallback(const rvinci_input_msg::rvinci_input::ConstPtr& r_input)
@@ -441,7 +400,7 @@ void rvinciDisplay::inputCallback(const rvinci_input_msg::rvinci_input::ConstPtr
       grab[i] = getaGrip(r_input->gripper[i].grab, i);
     }
 
-    // prop_cam_focus_->setVector(input_pos_[_RIGHT]); // TODO: set focus point
+    prop_cam_focus_->setVector(input_pos_[_RIGHT]);
     publishCursorUpdate(grab);
 
     /*
@@ -539,27 +498,23 @@ void rvinciDisplay::cameraSetup()
 
 void rvinciDisplay::cameraReset()
 {
-  rviz::BoolProperty::setValue(prop_cam_reset_, !prop_cam_reset_->getBool());
+  camera_pos_= Ogre::Vector3(0.0f,0.0f,0.0f);
+  camera_node_->setOrientation(1,0,0,0);
+  camera_node_->setPosition(camera_pos_);
+  for (int i=0; i<2; ++i)
+  {
+    camera_[i]->setNearClipDistance(0.01f);
+    camera_[i]->setFarClipDistance(100.0f);
+    camera_[i]->setFixedYawAxis(true, camera_node_->getOrientation() * Ogre::Vector3::UNIT_Z);
+    camera_[i]->setPosition(camera_offset_ - camera_ipd_ + 2*i*camera_ipd_);
+    camera_[i]->lookAt(camera_node_->getPosition());
 
-  if (prop_cam_reset_){
-    camera_pos_= Ogre::Vector3(0.0f,0.0f,0.0f);
-    // camera_node_->setOrientation(1,0,0,0);
-    camera_node_->setOrientation(0,0,0,1);
-    camera_node_->setPosition(camera_pos_);
-    for (int i=0; i<2; ++i)
-    {
-      camera_[i]->setNearClipDistance(0.01f);
-      camera_[i]->setFarClipDistance(100.0f);
-      camera_[i]->setFixedYawAxis(true, camera_node_->getOrientation() * Ogre::Vector3::UNIT_Z);
-      camera_[i]->setPosition(camera_offset_ - camera_ipd_ + 2*i*camera_ipd_);
-      camera_[i]->lookAt(camera_node_->getPosition());
+    cursor_[i].position.x = (2*i - 1)*0.6;
+    cursor_[i].position.y = 0;
+    cursor_[i].position.z = 0; 
+  }
 
-      // cursor_[i].position.x = (2*i - 1)*0.6;
-      cursor_[i].position.x = 0;
-      cursor_[i].position.y = 0;
-      cursor_[i].position.z = 0; 
-  }
-  }
+  prop_cam_reset_->setValue(QVariant(false));
 }
 
 void rvinciDisplay::cameraUpdate()
@@ -570,7 +525,7 @@ void rvinciDisplay::cameraUpdate()
     return;
   }
 
-  ROS_INFO_STREAM("getTransform return value: "<<getTransform_ret);
+  // ROS_INFO_STREAM("getTransform return value: "<<getTransform_ret);
   camera_ori_ = camera_ori_ * Ogre::Quaternion(Ogre::Degree(180), Ogre::Vector3::UNIT_X);
 
   if (fx_ == 0) return;
@@ -578,7 +533,7 @@ void rvinciDisplay::cameraUpdate()
   double baseline = -1 * tx_/fx_;
   Ogre::Vector3 right = camera_ori_ * Ogre::Vector3::UNIT_X;
 
-  ROS_INFO_STREAM("img width: "<<img_width_<<"img height: "<<img_height_);
+  // ROS_INFO_STREAM("img width: "<<img_width_<<"img height: "<<img_height_);
 
   Ogre::Matrix4 proj_matrix;
   proj_matrix = Ogre::Matrix4::ZERO;
@@ -951,11 +906,13 @@ void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg)
       }
     }
   }
+
 }
 
 
 void rvinciDisplay::MTMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg, int i)
 {
+
   rvmsg_.gripper[i].pose = msg->pose;
   rvmsg_.gripper[i].pose.position.x *= -1;
   rvmsg_.gripper[i].pose.position.y *= -1;
@@ -1044,19 +1001,19 @@ void rvinciDisplay::coagCallback(const sensor_msgs::Joy::ConstPtr& msg)
     return;
   }
 
-  if (coag_mode_ == 1) {  
-    // cursor_[_LEFT].position.x -= 10;
-    // cursor_[_RIGHT].position.x -= 10;
+  if (coag_mode_ == 1) { 
+    cursor_[_LEFT].position.x -= 10;
+    cursor_[_RIGHT].position.x -= 10;
 
     // in Mono mode
     Mono_mode_ = true;
     flag_delete_marker_ = true;
   }
-  else if (coag_mode_ == 0){ 
+  else if (coag_mode_ == 0){
     Mono_mode_ = false;
     int grab[2];
-    // cursor_[_LEFT].position.x += 10;
-    // cursor_[_RIGHT].position.x += 10;
+    cursor_[_LEFT].position.x += 10;
+    cursor_[_RIGHT].position.x += 10;
     grab[_LEFT] = 0;
     grab[_RIGHT] = 0;
     publishCursorUpdate(grab);
