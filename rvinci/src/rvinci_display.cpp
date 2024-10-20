@@ -39,7 +39,8 @@ rvinciDisplay::rvinciDisplay()
   , camera_node_(0)
   , window_(0)
   , window_R_(0)
-  , camera_offset_(0.0,-3.0,1.5)
+  // , camera_offset_(0.0,-3.0,1.5)
+  , camera_offset_(0.0,0.0,0.0)
   , single_psm_mode_(false)
   , first_point_set_(false)
 {
@@ -117,6 +118,7 @@ rvinciDisplay::~rvinciDisplay()
   delete prop_camera_posit_;
   delete prop_input_scalar_;
 }
+
 void rvinciDisplay::onInitialize()
 {
   render_widget_ = new rviz::RenderWidget(rviz::RenderSystem::get());
@@ -155,21 +157,17 @@ void rvinciDisplay::onInitialize()
   start_measurement_PSM_[_RIGHT] = false;
   gravity_published_ = false;
   wrench_published_ = false;
-  MTM_mm_ = true; // default measurement mode is MTM
-  PSM_mm_ = false;
-  cursor_visible_ = false;
-  teleop_mode_ = false;
+  MTM_mm_ = true;
   left_grab_ = false;
   right_grab_ = false;
-  camera_quick_tap_ = false;
-  clutch_quick_tap_ = false;
-  show_axes_right_ = true; 
-  show_cursor_right_ = false;
-  show_axes_left_ = true;
-  show_cursor_left_ = false;  
-  
+  Mono_mode_ = false;
   coag_init_ = true;
   flag_delete_marker_ = false;
+  left_released_ = false;
+  right_released_ = false;
+
+  PSM_initial_position_set_[_LEFT] = false;
+  PSM_initial_position_set_[_RIGHT] = false;
 
   measurement_status_MTM = _BEGIN;
   measurement_status_PSM_ = _BEGIN;
@@ -258,17 +256,8 @@ void rvinciDisplay::pubsubSetup()
   publisher_rgravity_ = nh_.advertise<std_msgs::Bool>("/MTMR/use_gravity_compensation", 10);
 }
 
-void rvinciDisplay::toggleDualHandMode() {
-    dual_hand_mode_ = !dual_hand_mode_;
-    ROS_INFO_STREAM("Dual-hand mode: " << (dual_hand_mode_ ? "Enabled" : "Disabled"));
-}
-
-void rvinciDisplay::toggleClearMode() {
-    flag_delete_marker_ = !flag_delete_marker_;
-    ROS_INFO_STREAM("Clear mode: " << (flag_delete_marker_ ? "Enabled" : "Disabled"));
-}
-
-void rvinciDisplay::leftCallback(const sensor_msgs::ImageConstPtr& img){
+void rvinciDisplay::leftCallback(const sensor_msgs::ImageConstPtr& img)
+{
 
   if( buffer_[0] == NULL )
     { buffer_[0] = (unsigned char*)malloc( sizeof(unsigned char*)*img->height*img->step ); }
@@ -522,7 +511,7 @@ void rvinciDisplay::cameraReset()
 
     cursor_[i].position.x = (2*i - 1)*0.6;
     cursor_[i].position.y = 0;
-    cursor_[i].position.z = 0;
+    cursor_[i].position.z = 0; 
   }
 
   prop_cam_reset_->setValue(QVariant(false));
@@ -657,35 +646,49 @@ int rvinciDisplay::uniqueLineMarkerID() {
     return line_marker_id++;
 }
 
-visualization_msgs::Marker rvinciDisplay::makeLineMarker(geometry_msgs::Point p1, geometry_msgs::Point p2, int id) {
+visualization_msgs::Marker rvinciDisplay::makeLineMarker(geometry_msgs::Point p1, geometry_msgs::Point p2, int id)
+{
+  visualization_msgs::Marker marker;
+  marker.header.frame_id = "base_link";
+  // marker.header.frame_id = "jhu_daVinci_stereo_frame";
+  marker.header.stamp = ros::Time::now();
+  marker.ns = "line_strip";
+  marker.id = id;
+
+  marker.type = visualization_msgs::Marker::LINE_STRIP;
+  marker.action = visualization_msgs::Marker::ADD;
+
+  marker.points.push_back(p1);
+  marker.points.push_back(p2);
+  marker.scale.x = 0.02;
+  marker.color.b = 0.8;
+  marker.color.a = 0.7;
+
+  return marker;
+}
+
+
+
+visualization_msgs::Marker rvinciDisplay::deleteAllMarkers() {
     visualization_msgs::Marker marker;
     marker.header.frame_id = "base_link";
     marker.header.stamp = ros::Time::now();
-    marker.ns = "line_strip";
-    marker.id = id;  // Use the unique marker ID
-
-    marker.type = visualization_msgs::Marker::LINE_STRIP;
-    marker.action = visualization_msgs::Marker::ADD;
-
-    marker.points.push_back(p1);
-    marker.points.push_back(p2);
-    marker.scale.x = 0.02;
-    marker.color.b = 0.8;
-    marker.color.a = 0.7;
+    marker.ns = ""; // Clear the namespace to target all markers.
+    marker.id = 0; // ID set to zero, not relevant when using DELETEALL.
+    marker.action = visualization_msgs::Marker::DELETEALL; // Delete all markers.
 
     return marker;
 }
 
-visualization_msgs::Marker rvinciDisplay::deleteMarker(int id)
-{
-  visualization_msgs::Marker marker;
-  marker.header.frame_id = "base_link";
-  marker.header.stamp = ros::Time::now();
-  marker.ns = "basic_shapes";
-  marker.id = id;
-  marker.action = visualization_msgs::Marker::DELETEALL;
+visualization_msgs::Marker rvinciDisplay::deleteAllMarkers() {
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = "base_link";
+    marker.header.stamp = ros::Time::now();
+    marker.ns = ""; // Clear the namespace to target all markers.
+    marker.id = 0; // ID set to zero, not relevant when using DELETEALL.
+    marker.action = visualization_msgs::Marker::DELETEALL; // Delete all markers.
 
-  return marker;
+    return marker;
 }
 
 
@@ -705,8 +708,15 @@ void rvinciDisplay::publishMeasurementMarkers()
     switch (measurement_status_MTM)
     {
       case _BEGIN:
-        marker_arr.markers.push_back(deleteMarker(_DELETE));
+        if (flag_delete_marker_)
+        {
+          ROS_INFO_STREAM("DELETING MARKERS");
+          marker_arr.markers.push_back(deleteAllMarkers());
+          publisher_markers.publish(marker_arr);
+          flag_delete_marker_ = false;
+        }
         break;
+
       case _START_MEASUREMENT:
         marker_arr.markers.push_back(makeTextMessage(text_pose, "Start MTM measurement", _STATUS_TEXT));
         marker_arr.markers.push_back(makeMarker(cursor_[_LEFT], _START_POINT));
@@ -714,18 +724,24 @@ void rvinciDisplay::publishMeasurementMarkers()
         measurement_start_ = cursor_[_LEFT];
         measurement_end_ = cursor_[_RIGHT];
         break;
+
       case _MOVING:
         marker_arr.markers.push_back(makeTextMessage(text_pose, "MTM moving", _STATUS_TEXT));
-        marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(cursor_[_LEFT], cursor_[_RIGHT]) * 1.2 * 10) + " mm", _DISTANCE_TEXT));
-        marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
-        marker_arr.markers.push_back(makeMarker(cursor_[marker_side_], _END_POINT));
+        marker_arr.markers.push_back(makeTextMessage(distance_pose, 
+          std::to_string(calculateDistance(cursor_[_LEFT], cursor_[_RIGHT]) * 10) + " mm", _DISTANCE_TEXT));
+        marker_arr.markers.push_back(makeMarker(cursor_[_LEFT], _START_POINT));
+        marker_arr.markers.push_back(makeMarker(cursor_[_RIGHT], _END_POINT));
+
+        // Add a new line marker that remains on the screen even after state transitions
         marker_arr.markers.push_back(makeLineMarker(cursor_[_LEFT].position, cursor_[_RIGHT].position, 1));
         measurement_start_ = cursor_[_LEFT];
         measurement_end_ = cursor_[_RIGHT];
         break;
+
       case _END_MEASUREMENT:
         marker_arr.markers.push_back(makeTextMessage(text_pose, "MTM end measurement", _STATUS_TEXT));
-        marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(measurement_start_, measurement_end_) * 1.2 * 10) + " mm", _DISTANCE_TEXT));
+        marker_arr.markers.push_back(makeTextMessage(distance_pose, 
+          std::to_string(calculateDistance(measurement_start_, measurement_end_) * 10) + " mm", _DISTANCE_TEXT));
         marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
         marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
         marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, uniqueLineMarkerID()));
@@ -737,80 +753,93 @@ void rvinciDisplay::publishMeasurementMarkers()
       switch (measurement_status_PSM_)
       {
         case _BEGIN:
-          marker_arr.markers.push_back(deleteMarker(_DELETE));
+            
           break;
         case _START_MEASUREMENT:
           marker_arr.markers.push_back(makeTextMessage(text_pose, "Start Dual PSM Measurement", _STATUS_TEXT));
-          marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
-          marker_arr.markers.push_back(makeMarker(PSM_pose_end_, _END_POINT));
+          // marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
+          // marker_arr.markers.push_back(makeMarker(PSM_pose_end_, _END_POINT));
           measurement_start_ = PSM_pose_start_;
           measurement_end_ = PSM_pose_end_;
           break;
         case _MOVING:
           marker_arr.markers.push_back(makeTextMessage(text_pose, "PSM moving", _STATUS_TEXT));
           marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(PSM_pose_start_, PSM_pose_end_) * 1000) + " mm", _DISTANCE_TEXT));
-          marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
-          marker_arr.markers.push_back(makeMarker(PSM_pose_end_, _END_POINT));
-          marker_arr.markers.push_back(makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, 1));
+          // marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
+          // marker_arr.markers.push_back(makeMarker(PSM_pose_end_, _END_POINT));
+          // marker_arr.markers.push_back(makeLineMarker(PSM_pose_start_.position, PSM_pose_end_.position, 1));
           measurement_start_ = PSM_pose_start_;
           measurement_end_ = PSM_pose_end_;
           break;
         case _END_MEASUREMENT:
           marker_arr.markers.push_back(makeTextMessage(text_pose, "Dual PSM end measurement", _STATUS_TEXT));
           marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(measurement_start_, measurement_end_) * 1000) + " mm", _DISTANCE_TEXT));
-          marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
-          marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
-          marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, uniqueLineMarkerID()));
+          // marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
+          // marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
+          // marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, uniqueLineMarkerID()));
           break;
       }
     }
-  else{  // Single PSM measurement
+  else if (left_released_ == 0 || right_released_ == 0){  // Single PSM measurement
     switch (measurement_status_single_PSM_)
     {
       case _BEGIN:
-        marker_arr.markers.push_back(deleteMarker(_DELETE));
+        marker_arr.markers.push_back(deleteAllMarkers());
+        publisher_markers.publish(marker_arr);
         break;
       case _START_MEASUREMENT:
         marker_arr.markers.push_back(makeTextMessage(text_pose, "Start Single PSM Measurement", _STATUS_TEXT));
-        if (left_released_ == 1) {
-          marker_arr.markers.push_back(makeMarker(PSM_pose_start_, _START_POINT));
-        } else {
-          marker_arr.markers.push_back(makeMarker(PSM_pose_end_, _START_POINT));
-        }
-        measurement_start_ = (left_released_ == 1) ? PSM_pose_start_ : PSM_pose_end_;
+        measurement_start_ = (left_released_ == 0) ? PSM_pose_start_ : PSM_pose_end_;
         break;
       case _MOVING:
         marker_arr.markers.push_back(makeTextMessage(text_pose, "Single PSM moving", _STATUS_TEXT));
-        if (left_released_ == 1) {
+        if (left_released_ == 0) {
           measurement_end_ = PSM_pose_start_;
-        } else {
+        } else if (right_released_ == 0){
           measurement_end_ = PSM_pose_end_;
         }
         marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(measurement_start_, measurement_end_) * 1000) + " mm", _DISTANCE_TEXT));
-        marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
-        marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
-        marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, 1));
+        // marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
+        // marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
+        // marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, 1));
         break;
       case _END_MEASUREMENT:
         marker_arr.markers.push_back(makeTextMessage(text_pose, "Single PSM end measurement", _STATUS_TEXT));
         marker_arr.markers.push_back(makeTextMessage(distance_pose, std::to_string(calculateDistance(measurement_start_, measurement_end_) * 1000) + " mm", _DISTANCE_TEXT));
-        marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
-        marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
-        marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, uniqueLineMarkerID()));
+        // marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
+        // marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
+        // marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, uniqueLineMarkerID()));
         break;
     }
   } 
-       
+     
   publisher_markers.publish(marker_arr);
+}
+
+void rvinciDisplay::updateCursorVisibility(const interaction_cursor_msgs::InteractionCursorUpdate& msg)
+{
+    // Update the "Show Cursor" property based on the received message
+    if (msg.show)
+    {
+        this->setProperty("Show Cursor", true);
+    }
+    else
+    {
+        this->setProperty("Show Cursor", false);
+    }
 }
 
 void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg) 
 {
-    // buttons: 0 - released, 1 - pressed, 2 - quick tap
-    rvmsg_.clutch = msg->buttons[0];
+  // buttons: 0 - released, 1 - pressed, 2 - quick tap
+  rvmsg_.clutch = msg->buttons[0];
 
-    if (msg->buttons[0] == 2) clutch_quick_tap_ = true;
-    else clutch_quick_tap_ = false;
+  // if (msg->buttons[0] == 2) clutch_quick_tap_ = true;
+  // else clutch_quick_tap_ = false;
+  // if (clutch_quick_tap_)
+  // {
+  //     toggleDualHandMode();
+  // }
 }
 
 void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg) 
@@ -877,81 +906,64 @@ void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg)
       }
     }
   }
+
 }
 
 
 void rvinciDisplay::MTMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg, int i)
 {
-  //Offsets to set davinci at 0 x and y, with an x offset for each gripper.
+
   rvmsg_.gripper[i].pose = msg->pose;
   rvmsg_.gripper[i].pose.position.x *= -1;
   rvmsg_.gripper[i].pose.position.y *= -1;
-  rvmsg_.gripper[i].pose.position.z -= 0.4;
+  // rvmsg_.gripper[i].pose.position.z -= 0.4;
 }
 
-// void rvinciDisplay::PSMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg, int i)
-// {
-//   // MTMR-PSM1, MTML-PSM2
-//   if (start_measurement_PSM_[_LEFT] || start_measurement_PSM_[_RIGHT] && measurement_status_PSM_ == _START_MEASUREMENT)
-//   {
-//     switch (i)
-//     {
-//       case _LEFT: 
-//         PSM_pose_start_ = msg->pose;
-//         PSM_pose_start_.position.x -= 0.000154096;
-//         PSM_pose_start_.position.y -= 0.000118207;
-//         break;
-//       case _RIGHT: 
-//         PSM_pose_end_ = msg->pose;
-//         PSM_pose_end_.position.x -= 0.000154096;
-//         PSM_pose_end_.position.y -= 0.000118207;
-//         break;
-//     }
-//   }
-// }
 void rvinciDisplay::PSMCallback(const geometry_msgs::PoseStamped::ConstPtr& msg, int i)
 {
-    // Check if we are in dual-hand mode or single-hand mode
-    if (dual_hand_mode_)
+  // Ensure the initial position is set properly and update the current positions
+  if (left_released_ == 0 && right_released_ == 0)
+  {
+    if (measurement_status_PSM_ == _START_MEASUREMENT || measurement_status_PSM_ == _MOVING)
     {
-        // In dual-hand mode, update both left and right poses if they are both engaged
-        if (start_measurement_PSM_[_LEFT] && start_measurement_PSM_[_RIGHT] && measurement_status_PSM_ == _START_MEASUREMENT)
-        {
-            switch (i)
-            {
-                case _LEFT: 
-                    PSM_pose_start_ = msg->pose;
-                    PSM_pose_start_.position.x -= 0.000154096;
-                    PSM_pose_start_.position.y -= 0.000118207;
-                    break;
-                case _RIGHT: 
-                    PSM_pose_end_ = msg->pose;
-                    PSM_pose_end_.position.x -= 0.000154096;
-                    PSM_pose_end_.position.y -= 0.000118207;
-                    break;
-            }
-        }
+      switch (i)
+      {
+        case _LEFT: 
+          if (!PSM_initial_position_set_[_LEFT])
+          {
+            PSM_initial_pose_[_LEFT] = msg->pose;
+            PSM_initial_position_set_[_LEFT] = true;
+          }
+          PSM_pose_start_ = msg->pose; 
+          break;
+        case _RIGHT: 
+          if (!PSM_initial_position_set_[_RIGHT])
+          {
+            PSM_initial_pose_[_RIGHT] = msg->pose;
+            PSM_initial_position_set_[_RIGHT] = true;
+          }
+          PSM_pose_end_ = msg->pose; 
+          break;
+      }
     }
-    else  // Single-hand mode
+  }
+  else 
+  {
+    if (measurement_status_single_PSM_ == _START_MEASUREMENT || measurement_status_single_PSM_ == _MOVING)
     {
-        // In single-hand mode, update only the gripping hand's pose
-        if ((start_measurement_PSM_[_LEFT] || start_measurement_PSM_[_RIGHT]) && measurement_status_PSM_ == _START_MEASUREMENT)
-        {
-            if (i == _LEFT && start_measurement_PSM_[_LEFT])  // Only update if the left gripper is gripping
-            {
-                PSM_pose_start_ = msg->pose;
-                PSM_pose_start_.position.x -= 0.000154096;
-                PSM_pose_start_.position.y -= 0.000118207;
-            }
-            else if (i == _RIGHT && start_measurement_PSM_[_RIGHT])  // Only update if the right gripper is gripping
-            {
-                PSM_pose_end_ = msg->pose;
-                PSM_pose_end_.position.x -= 0.000154096;
-                PSM_pose_end_.position.y -= 0.000118207;
-            }
-        }
+      switch (i)
+      {
+        case _LEFT: 
+          PSM_pose_start_ = msg->pose; 
+          break;
+        case _RIGHT: 
+          PSM_pose_end_ = msg->pose; 
+          break;
+      }
     }
+  }
 }
+
 
 void rvinciDisplay::teleopCallback(const std_msgs::Bool::ConstPtr& msg)
 {
@@ -965,24 +977,21 @@ void rvinciDisplay::teleopCallback(const std_msgs::Bool::ConstPtr& msg)
     }
 }
 
-
-
 void rvinciDisplay::gripCallback(const std_msgs::Bool::ConstPtr& msg, int i)
 { 
   // 0 - grabbed, 1 - released
   if ( i == _LEFT ){ 
     left_released_ = msg->data;
-    // left_grip_timestamp_ = ros::Time::now();
+    left_grip_timestamp_ = ros::Time::now();
     } 
   else if ( i == _RIGHT){ 
     right_released_ = msg->data;
-    // right_grip_timestamp_ = ros::Time::now();
+    right_grip_timestamp_ = ros::Time::now();
     } 
-  // ros::Duration time_difference = left_grip_timestamp_ - right_grip_timestamp_;
+  ros::Duration time_difference = left_grip_timestamp_ - right_grip_timestamp_;
 
 }
   
-
 void rvinciDisplay::coagCallback(const sensor_msgs::Joy::ConstPtr& msg)
 {
   coag_mode_ = msg->buttons[0];
@@ -992,25 +1001,24 @@ void rvinciDisplay::coagCallback(const sensor_msgs::Joy::ConstPtr& msg)
     return;
   }
 
-  // if (coag_mode_ == 1) { 
-  //   cursor_[_LEFT].position.x -= 10;
-  //   cursor_[_RIGHT].position.x -= 10;
+  if (coag_mode_ == 1) { 
+    // cursor_[_LEFT].position.x -= 10;
+    // cursor_[_RIGHT].position.x -= 10;
 
-  //   // in Mono mode
-  //   Mono_mode_ = true;
-  //   flag_delete_marker_ = true;
-  // }
-  // else if (coag_mode_ == 0){
-  //   Mono_mode_ = false;
-  //   int grab[2];
-  //   cursor_[_LEFT].position.x += 10;
-  //   cursor_[_RIGHT].position.x += 10;
-  //   grab[_LEFT] = 0;
-  //   grab[_RIGHT] = 0;
-  //   publishCursorUpdate(grab);
-  // }
+    // in Mono mode
+    Mono_mode_ = true;
+    flag_delete_marker_ = true;
+  }
+  else if (coag_mode_ == 0){
+    Mono_mode_ = false;
+    int grab[2];
+    // cursor_[_LEFT].position.x += 10;
+    // cursor_[_RIGHT].position.x += 10;
+    grab[_LEFT] = 0;
+    grab[_RIGHT] = 0;
+    publishCursorUpdate(grab);
+  }
 }
-
 
 void rvinciDisplay::cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr& msg)
 {

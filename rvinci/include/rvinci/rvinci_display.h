@@ -172,7 +172,9 @@ protected Q_SLOTS:
   //!Sets up ROS subscribers and publishers
   virtual void pubsubSetup();
   //!Toggle for DVRK Gravity Compensation state
-  virtual void gravityCompensation();
+  virtual void updateGravityCompensationMode();
+  virtual void updateCursorVisibility();
+  virtual void updateCursorAxisVisibility();
 
 private:
   //!Creates viewports and cameras.
@@ -210,8 +212,7 @@ private:
   visualization_msgs::Marker makeMarker(geometry_msgs::Pose p, int id);
   visualization_msgs::Marker makeLineMarker(geometry_msgs::Point p1, geometry_msgs::Point p2, int id);
   visualization_msgs::Marker makeTextMessage(geometry_msgs::Pose p, std::string msg, int id);
-  visualization_msgs::Marker deleteMarker(int id);
- 
+  visualization_msgs::Marker deleteAllMarkers();
 
   //measurement
   void toggleDualHandMode();
@@ -234,7 +235,7 @@ private:
   bool MTM_mm_;
   bool PSM_mm_;
   bool teleop_mode_;
-  bool mono_mode_;
+  bool Mono_mode_;
   bool coag_init_;
   bool cursor_visible_;
   bool camera_quick_tap_;
@@ -245,11 +246,11 @@ private:
   bool show_axes_left_;
   bool show_cursor_left_;  
   bool start_measurement_PSM_[2];
+  bool PSM_initial_position_set_[2];
 
   bool single_psm_mode_;
   bool first_point_set_;
-  bool left_released_, right_released_;
-
+  bool flag_delete_marker_;
 
   int marker_side_;
   MeasurementApp measurement_status_MTM;
@@ -325,6 +326,8 @@ private:
   rviz::RosTopicProperty *prop_ros_topic_;
   rviz::BoolProperty *prop_gravity_comp_;
   rviz::BoolProperty *prop_cam_reset_;
+  rviz::BoolProperty *property_show_cursor_;
+  rviz::BoolProperty *property_show_cursor_axis_;
 
   rviz::RenderWidget *render_widget_;
   rviz::RenderWidget *render_widget_R_;
@@ -334,6 +337,8 @@ private:
   geometry_msgs::Pose measurement_end_;
   geometry_msgs::Pose PSM_pose_start_;
   geometry_msgs::Pose PSM_pose_end_;
+  geometry_msgs::Pose PSM_initial_pose_[2]; 
+  geometry_msgs::Pose PSM_pose_single_;
 
   rviz::FrameManager frame_manager_;
   std_msgs::Header cam_header_;
@@ -344,7 +349,6 @@ private:
   double cy_;
   double img_height_;
   double img_width_;
-
 };
 
 } // namespace rvinci
