@@ -172,7 +172,9 @@ protected Q_SLOTS:
   //!Sets up ROS subscribers and publishers
   virtual void pubsubSetup();
   //!Toggle for DVRK Gravity Compensation state
-  virtual void gravityCompensation();
+  virtual void updateGravityCompensationMode();
+  virtual void updateCursorVisibility();
+  virtual void updateCursorAxisVisibility();
 
 private:
   //!Creates viewports and cameras.
@@ -324,6 +326,8 @@ private:
   rviz::RosTopicProperty *prop_ros_topic_;
   rviz::BoolProperty *prop_gravity_comp_;
   rviz::BoolProperty *prop_cam_reset_;
+  rviz::BoolProperty *property_show_cursor_;
+  rviz::BoolProperty *property_show_cursor_axis_;
 
   rviz::RenderWidget *render_widget_;
   rviz::RenderWidget *render_widget_R_;
@@ -345,7 +349,6 @@ private:
   double cy_;
   double img_height_;
   double img_width_;
-
 };
 
 } // namespace rvinci
