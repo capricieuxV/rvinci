@@ -40,7 +40,7 @@ rvinciDisplay::rvinciDisplay()
   , window_(0)
   , window_R_(0)
   // , camera_offset_(0.0,-3.0,1.5)
-  , camera_offset_(0.0,0.0,0.0)
+  , camera_offset_(0.0,0.0,1.0)
   , single_psm_mode_(false)
   , first_point_set_(false)
 {
@@ -176,6 +176,7 @@ void rvinciDisplay::onInitialize()
   input_pos_[_LEFT].x = input_pos_[_LEFT].y = input_pos_[_LEFT].z = 0;
   input_pos_[_RIGHT].x = input_pos_[_RIGHT].y = input_pos_[_RIGHT].z = 0;
 }
+
 void rvinciDisplay::update(float wall_dt, float ros_dt)
 {
   if( backgroundImage_[0] != NULL ){
@@ -499,7 +500,8 @@ void rvinciDisplay::cameraSetup()
 void rvinciDisplay::cameraReset()
 {
   camera_pos_= Ogre::Vector3(0.0f,0.0f,0.0f);
-  camera_node_->setOrientation(1,0,0,0);
+  // camera_node_->setOrientation(1,0,0,0);
+  camera_node_->setOrientation(Ogre::Quaternion::IDENTITY);
   camera_node_->setPosition(camera_pos_);
   for (int i=0; i<2; ++i)
   {
@@ -530,7 +532,8 @@ void rvinciDisplay::cameraUpdate()
 
   if (fx_ == 0) return;
 
-  double baseline = -1 * tx_/fx_;
+  // double baseline = -1 * tx_/fx_; //baseline is negative of translation in x direction
+  double baseline = 0.0; //TODO: set baseline to 0 for now, need to fix this
   Ogre::Vector3 right = camera_ori_ * Ogre::Vector3::UNIT_X;
 
   // ROS_INFO_STREAM("img width: "<<img_width_<<"img height: "<<img_height_);
@@ -550,8 +553,10 @@ void rvinciDisplay::cameraUpdate()
 
   camera_[_LEFT]->setPosition(camera_pos_);
   // camera_[_LEFT]->lookAt(0, 0, 0);
-  Ogre::Vector3 baseline_offset = baseline * right;
   camera_[_LEFT]->setOrientation(camera_ori_);
+
+  Ogre::Vector3 baseline_offset = baseline * right;
+
   camera_[_RIGHT]->setPosition(camera_pos_ + baseline_offset);
   // camera_[_RIGHT]->lookAt(0, 0, 0);
   camera_[_RIGHT]->setOrientation(camera_ori_);
@@ -827,6 +832,15 @@ void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg)
   // {
   //     toggleDualHandMode();
   // }
+
+  // TODO: use clutch for debugging for now
+  ROS_INFO_STREAM("Camera Left Position: " << camera_[_LEFT]->getPosition());
+  ROS_INFO_STREAM("Camera Right Position: " << camera_[_RIGHT]->getPosition());
+  ROS_INFO_STREAM("Camera Left Orientation: " << camera_[_LEFT]->getOrientation());
+  ROS_INFO_STREAM("Camera Right Orientation: " << camera_[_RIGHT]->getOrientation());
+
+  ROS_INFO_STREAM("Projection Matrix: " << proj_matrix);
+  ROS_INFO_STREAM("Marker Position: " << marker.pose.position.x << ", " << marker.pose.position.y << ", " << marker.pose.position.z);
 }
 
 void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg) 
