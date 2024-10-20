@@ -9,8 +9,8 @@
   <arg name="rig_name" default="jhu_daVinci"/>
 
   <!-- Arbitrary transform as an example, just need to publish to "/$(arg rig_name)_stereo_frame" -->
-  <!-- -0.05683 -2.6828 -2.0125 0.52573 -0.0026286 -0.0042531 0.85063 -->
-  <node ns="$(arg rig_name)" name="stereo_transform" pkg="tf" type="static_transform_publisher" args="0 -8 8 0 0 3.92699081699 /base_link /$(arg rig_name)_stereo_frame 10"/>
+  <node ns="$(arg rig_name)" name="stereo_transform" pkg="tf" type="static_transform_publisher"
+      args="0 -8 8 0.924 0.000 0.000 -0.383 /base_link /$(arg rig_name)_stereo_frame 10"/>
   
   <!-- left camera driver node -->
   <include ns="$(arg rig_name)/stereo_raw" file="$(find dvrk_stereo)/launch/gscam_stereo_single.launch">
