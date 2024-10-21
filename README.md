@@ -87,7 +87,7 @@ Save results:
 
 ## PSM position adjustment
 - Changed the json file for MTMR-PSM1-MTML-PSM2-Teleop
-- Translational postion of PSM1 & PSM2 were +0.2 & -0.2 before, now it is +0.135 & -0.135 (based on how we wet up the hardware) 
+- Translational postion of PSM1 & PSM2 were +0.2 & -0.2 before, now it is +0.1440 & -0.1410 (based on how we wet up the hardware) 
 
 
 
