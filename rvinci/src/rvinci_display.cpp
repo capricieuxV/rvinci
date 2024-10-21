@@ -607,13 +607,13 @@ visualization_msgs::Marker rvinciDisplay::makeMarker(geometry_msgs::Pose p, int 
   marker.action = visualization_msgs::Marker::ADD;
 
   marker.pose = p; 
-  marker.scale.x = 0.1;
-  marker.scale.y = 0.1;
-  marker.scale.z = 0.1;
+  marker.scale.x = 0.085;
+  marker.scale.y = 0.085;
+  marker.scale.z = 0.085;
   marker.color.r = 0.5;
   marker.color.g = 0.5;
   marker.color.b = 0.5;
-  marker.color.a = 0.7;
+  marker.color.a = 0.75;
 
   marker.lifetime = ros::Duration();
   return marker;
