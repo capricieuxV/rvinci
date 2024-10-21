@@ -720,7 +720,7 @@ void rvinciDisplay::publishMeasurementMarkers()
       case _MOVING:
         marker_arr.markers.push_back(makeTextMessage(text_pose, "MTM moving", _STATUS_TEXT));
         marker_arr.markers.push_back(makeTextMessage(distance_pose, 
-          std::to_string(calculateDistance(cursor_[_LEFT], cursor_[_RIGHT]) * 12) + " mm", _DISTANCE_TEXT));
+          std::to_string(calculateDistance(cursor_[_LEFT], cursor_[_RIGHT]) * 11.5) + " mm", _DISTANCE_TEXT));
         marker_arr.markers.push_back(makeMarker(cursor_[_LEFT], _START_POINT));
         marker_arr.markers.push_back(makeMarker(cursor_[_RIGHT], _END_POINT));
 
@@ -733,7 +733,7 @@ void rvinciDisplay::publishMeasurementMarkers()
       case _END_MEASUREMENT:
         marker_arr.markers.push_back(makeTextMessage(text_pose, "MTM end measurement", _STATUS_TEXT));
         marker_arr.markers.push_back(makeTextMessage(distance_pose, 
-          std::to_string(calculateDistance(measurement_start_, measurement_end_) * 12) + " mm", _DISTANCE_TEXT));
+          std::to_string(calculateDistance(measurement_start_, measurement_end_) * 11.5) + " mm", _DISTANCE_TEXT));
         marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
         marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
         marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, uniqueLineMarkerID()));
