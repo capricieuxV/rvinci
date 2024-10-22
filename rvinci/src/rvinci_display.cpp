@@ -43,6 +43,7 @@ rvinciDisplay::rvinciDisplay()
   , camera_offset_(0.0,0.0,1.0)
   , single_psm_mode_(false)
   , first_point_set_(false)
+  , sys_init_(true)
 {
   std::string rviz_path = ros::package::getPath(ROS_PACKAGE_NAME);
   Ogre::ResourceGroupManager::getSingleton().addResourceLocation( rviz_path + "/ogre_media", "FileSystem", ROS_PACKAGE_NAME );
@@ -151,11 +152,11 @@ void rvinciDisplay::onInitialize()
 
   pubsubSetup();
 
+  MTM_mm_ = true;
   start_measurement_PSM_[_LEFT] = false;
   start_measurement_PSM_[_RIGHT] = false;
   gravity_published_ = false;
   wrench_published_ = false;
-  MTM_mm_ = true;
   left_grab_ = false;
   right_grab_ = false;
   Mono_mode_ = false;
@@ -202,23 +203,40 @@ void rvinciDisplay::update(float wall_dt, float ros_dt)
 
   publishMeasurementMarkers();
 
-  // if (!wrench_published_) 
-  // {
-  //   ROS_INFO_STREAM("Publish Wrench\n");
-  //   publishWrench();
-  //   wrench_published_ = true;
-  // }
-  // if (wrench_published_ && !gravity_published_)
-  // {
-   
-  //   ROS_INFO_STREAM("Publish Gravity\n"); 
-  //   publishGravity();
-  //   gravity_published_ = true;
-  // }
+  // ROS_INFO_STREAM("Wrench: " << wrench_published_);
+  // ROS_INFO_STREAM("Gravity: " << gravity_published_);
 
-  if (! teleop_mode_){  
-  publishWrench();
-  publishGravity();}
+  if (teleop_mode_){
+    if (coag_mode_ && clutch_mode_) wrench_published_ = true;
+    else wrench_published_ = false;
+
+    if (wrench_published_) 
+    { 
+      ROS_INFO_STREAM("Publish Wrench\n");
+      publishWrench();
+      wrench_published_ = false;
+    }
+
+    if (wrench_published_ && !gravity_published_)
+    {
+    
+      gravity_published_ = true;
+    }
+  }
+  else{
+    // ROS_INFO_STREAM("MTM\n");
+    gravity_published_ = true;
+  }
+
+  if (gravity_published_) {
+    // ROS_INFO_STREAM("Publish Gravity\n"); 
+    if(sys_init_){
+      ROS_INFO_STREAM("system init: " << sys_init_); 
+      publishWrench();
+    }
+    sys_init_ = false;
+    publishGravity();
+  }
 }
 
 //void rvinciDisplay::reset(){}
