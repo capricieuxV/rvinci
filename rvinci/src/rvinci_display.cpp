@@ -202,20 +202,6 @@ void rvinciDisplay::update(float wall_dt, float ros_dt)
   publisher_rvinci_.publish(rvmsg_);
 
   publishMeasurementMarkers();
-
-  // if (!wrench_published_) 
-  // {
-  //   publishWrench();
-  //   wrench_published_ = true;
-  // }
-  // if (wrench_published_ && !gravity_published_)
-  // {
-  //   publishGravity();
-  //   gravity_published_ = true;
-  // }
-
-  // publishWrench();
-  // publishGravity();
   
 }
 
@@ -692,36 +678,6 @@ visualization_msgs::Marker rvinciDisplay::deleteAllMarkers() {
     return marker;
 }
 
-// void rvinciDisplay::saveMeasurementData(double distance, const std::string &mode)
-// {
-//   static std::vector<double> measurement_data;
-//   static time_t end_mode_timestamp = time(0);
-
-//   // Record data if 20 seconds have passed in END mode
-//   if (difftime(time(0), end_mode_timestamp) >= 20)
-//   {
-//     end_mode_timestamp = time(0);
-//     measurement_data.push_back(distance);
-
-//     if (measurement_data.size() == 8)  // Complete set of data for a user
-//     {
-//       std::ofstream data_file;
-//       data_file.open("data.txt", std::ios::out | std::ios::app);
-//       if (data_file.is_open())
-//       {
-//         for (size_t i = 0; i < measurement_data.size(); ++i)
-//         {
-//           data_file << measurement_data[i];
-//           if (i < measurement_data.size() - 1)
-//             data_file << ", ";
-//         }
-//         data_file << std::endl;
-//       }
-//       data_file.close();
-//       measurement_data.clear();
-//     }
-//   }
-// }
 
 void rvinciDisplay::publishMeasurementMarkers()
 {
