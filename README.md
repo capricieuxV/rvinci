@@ -55,7 +55,7 @@ roslaunch rvinci rvinci_rviz.launch
 ```
 To launch rvinci full system:
 ```bash
-rvinci_full_sys.launch
+roslaunch rvinci rvinci_full_sys.launch
 ```
 
 To launch rvinci with buttons to select the mode for the measurement tool:
