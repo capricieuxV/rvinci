@@ -62,7 +62,7 @@ To launch rvinci with interactive mode:
 roslaunch rvinci rvinci_interactive.launch
 ```
 
-# How to calibrate and move the calibration file (.yaml) to correct camera_info_url
+## How to calibrate and move the calibration file (.yaml) to correct directory
 First, bring up the stereo camera:
 ```bash
 roslaunch dvrk_video jhu_daVinci_video.launch
@@ -82,6 +82,12 @@ Save results:
 - Click 'Calibrate' to finalize the calibration
 - Save: Click 'Save' and the calibration result is saved to /tmp/calibrationdata.tar.gz (you will see this instruction outputed on screen)
 - Commit button to save (note camera_info_url should be correct)
+- Untar calibration.tar file and there will be 'left.yaml' and 'right.yaml'
+- Move the two .yaml files to /home//catkin_ws/src/cisst-saw/sawIntuitiveResearchKit/share/jhu-daVinci
+
+## PSM position adjustment
+- Changed the json file for MTMR-PSM1-MTML-PSM2-Teleop
+- Translational postion of PSM1 & PSM2 were +0.2 & -0.2 before, now it is +0.1440 & -0.1410 (based on how we wet up the hardware) 
 
 
 

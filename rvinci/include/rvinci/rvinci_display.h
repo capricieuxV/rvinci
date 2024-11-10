@@ -208,7 +208,8 @@ private:
   visualization_msgs::Marker makeMarker(geometry_msgs::Pose p, int id);
   visualization_msgs::Marker makeLineMarker(geometry_msgs::Point p1, geometry_msgs::Point p2, int id);
   visualization_msgs::Marker makeTextMessage(geometry_msgs::Pose p, std::string msg, int id);
-  visualization_msgs::Marker deleteMarker(int id);
+  visualization_msgs::Marker deleteAllMarkers();
+  // void rvinciDisplay::saveMeasurementData(double distance, const std::string &mode);
   int uniqueLineMarkerID();
 
   //measurement
@@ -231,7 +232,7 @@ private:
   bool MTM_mm_;
   bool PSM_mm_;
   bool teleop_mode_;
-  bool mono_mode_;
+  bool Mono_mode_;
   bool coag_init_;
   bool left_released_;
   bool right_released_;

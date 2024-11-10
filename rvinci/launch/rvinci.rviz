@@ -42,16 +42,16 @@ Visualization Manager:
         X: 0
         Y: 0
         Z: 0
-      Camera Orientation:
-        W: 0.8506349921226501
-        X: 0.5257329940795898
-        Y: -0.0026285999920219183
-        Z: -0.004253069870173931
+      Camera Orientation:   
+        W: 1
+        X: 0
+        Y: 0
+        Z: 0
       Camera Position:
-        X: -0.056829601526260376
-        Y: -2.682810068130493
-        Z: -2.0125200748443604
-      Camera Reset: false
+        X: 0
+        Y: 0
+        Z: 0
+      Camera Reset: true
       Class: rvinci/rvinciDisplay
       Enabled: true
       Input Scalar:
@@ -89,8 +89,8 @@ Visualization Manager:
       Show Visual Aids: false
       Update Topic: /button_mode/update
       Value: true
-    - Axes Length: 0.10000000149011612
-      Axes Radius: 0.009999999776482582
+    - Axes Length: 0.2
+      Axes Radius: 0.03
       Class: rviz/InteractionCursorDisplay
       Cursor Alpha: 1
       Cursor Color: 255; 71; 71
@@ -98,11 +98,11 @@ Visualization Manager:
       Enabled: true
       Name: InteractionCursorDisplay
       Show Axes: true
-      Show Cursor: true
+      Show Cursor: false
       Update Topic: /rvinci_cursor_right/update
       Value: true
-    - Axes Length: 0.10000000149011612
-      Axes Radius: 0.009999999776482582
+    - Axes Length: 0.2
+      Axes Radius: 0.03
       Class: rviz/InteractionCursorDisplay
       Cursor Alpha: 1
       Cursor Color: 80; 255; 20
