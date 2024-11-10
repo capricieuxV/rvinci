@@ -1,0 +1,45 @@
+<launch>
+
+  <!-- Arguments -->
+  <arg name="left_cam_device" default="1"/>
+  <arg name="right_cam_device" default="0"/>
+  <arg name="rig_name" default="jhu_daVinci"/>
+
+  <!-- Arbitrary transform for stereo camera -->
+  <node ns="$(arg rig_name)" name="stereo_transform" pkg="tf" type="static_transform_publisher"
+      args="0 -8 8 0.924 0.000 0.000 -0.383 /base_link /$(arg rig_name)_stereo_frame 10"/>
+  
+  <!-- Left camera driver node -->
+  <include ns="$(arg rig_name)/stereo_raw" file="$(find dvrk_stereo)/launch/gscam_stereo_single.launch">
+    <arg name="camera_name" value="left"/>
+    <arg name="camera_info_url" value="package://dvrk_config/$(arg rig_name)/left.yaml"/>
+    <arg name="device" value="$(arg left_cam_device)"/>
+    <arg name="frame_id" value="$(arg rig_name)_stereo_frame"/>
+  </include>
+
+  <!-- Right camera driver node -->
+  <include ns="$(arg rig_name)/stereo_raw" file="$(find dvrk_stereo)/launch/gscam_stereo_single.launch">
+    <arg name="camera_name" value="right"/>
+    <arg name="camera_info_url" value="package://dvrk_config/$(arg rig_name)/right.yaml"/>
+    <arg name="device" value="$(arg right_cam_device)"/>
+    <arg name="frame_id" value="$(arg rig_name)_stereo_frame"/>
+  </include>
+
+  <!-- Stereo image processing -->
+  <node ns="$(arg rig_name)/stereo_raw" name="$(arg rig_name)_stereo_proc" pkg="stereo_image_proc" type="stereo_image_proc">
+    <param name="_approximate_sync" value="True"/>
+  </node>
+
+  <!-- Image resizing -->
+  <node ns="$(arg rig_name)/stereo_processed" name="$(arg rig_name)_stereo_resize" pkg="dvrk_stereo" type="dvrk_stereo">
+    <param name="~width" value="1280"/>
+    <param name="~height" value="1024"/>
+    <param name="~camera" value="/$(arg rig_name)/stereo_raw"/>
+  </node>
+
+  <!-- RViz visualization -->
+  <node name="rviz" pkg="rviz" type="rviz"
+         args="-d $(find rvinci)/launch/rvinci.rviz" 
+         output="screen" />
+
+</launch>
