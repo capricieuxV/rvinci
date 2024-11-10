@@ -173,6 +173,8 @@ protected Q_SLOTS:
   virtual void pubsubSetup();
   //!Toggle for DVRK Gravity Compensation state
   virtual void gravityCompensation();
+  // virtual void updateCursorVisibility();
+  // virtual void updateCursorAxisVisibility();
 
 private:
   //!Creates viewports and cameras.
@@ -205,17 +207,22 @@ private:
   void publishWrench();
 
   //visualization
+  void toggleClearMode(); // Toggle to clear all markers or not
+  int uniqueLineMarkerID(); // Generate a unique ID for each line marker
   visualization_msgs::Marker makeMarker(geometry_msgs::Pose p, int id);
   visualization_msgs::Marker makeLineMarker(geometry_msgs::Point p1, geometry_msgs::Point p2, int id);
   visualization_msgs::Marker makeTextMessage(geometry_msgs::Pose p, std::string msg, int id);
   visualization_msgs::Marker deleteAllMarkers();
+<<<<<<< HEAD
   // void rvinciDisplay::saveMeasurementData(double distance, const std::string &mode);
   int uniqueLineMarkerID();
+=======
+>>>>>>> VANESSA
 
   //measurement
+  void toggleDualHandMode();
   double calculateDistance(geometry_msgs::Pose p1, geometry_msgs::Pose p2);
   void publishMeasurementMarkers();
-  bool isMTM(bool left_grab, bool right_grab, bool coag_mode);
 
   enum MeasurementApp {_BEGIN, _START_MEASUREMENT, _MOVING, _END_MEASUREMENT};
   enum MarkerID {_STATUS_TEXT, _START_POINT, _END_POINT, _LINE, _DISTANCE_TEXT, _DELETE};
@@ -224,21 +231,22 @@ private:
   // std_msgs::String text_message_;
 
   bool camera_mode_, clutch_mode_;
+  bool dual_hand_mode_;  // Flag to toggle between single-hand and dual-hand measurement
   int  coag_mode_;
   bool prev_grab_[2];
   bool wrench_published_;
   bool gravity_published_;
   bool left_grab_, right_grab_;
+  bool left_released_, right_released_;
   bool MTM_mm_;
-  bool PSM_mm_;
+  bool sys_init_;
   bool teleop_mode_;
   bool Mono_mode_;
   bool coag_init_;
-  bool left_released_;
-  bool right_released_;
   bool cursor_visible_;
   bool camera_quick_tap_;
   bool clutch_quick_tap_;
+  bool flag_delete_marker_;
   bool show_axes_right_;
   bool show_cursor_right_;
   bool show_axes_left_;
@@ -248,9 +256,6 @@ private:
 
   bool single_psm_mode_;
   bool first_point_set_;
-  bool flag_delete_marker_;
-
-  
   
 
   int marker_side_;
@@ -286,9 +291,6 @@ private:
   Ogre::Vector3 input_pos_[2];
   Ogre::Vector3 input_change_[2];
 
-  ros::Time left_grip_timestamp_;
-  ros::Time right_grip_timestamp_;
-  ros::Time clutch_press_start_time_;
   ros::NodeHandle nh_;
   ros::Subscriber subscriber_input_;
   ros::Subscriber subscriber_lcam_;
@@ -320,6 +322,8 @@ private:
   ros::Publisher publisher_lgravity_;
   ros::Publisher publisher_rgravity_;
 
+  ros::Time clutch_press_start_time_;
+
   rviz::VectorProperty *prop_cam_focus_;
   rviz::QuaternionProperty *property_camrot_;
   rviz::BoolProperty *prop_manual_coords_;
@@ -328,6 +332,8 @@ private:
   rviz::RosTopicProperty *prop_ros_topic_;
   rviz::BoolProperty *prop_gravity_comp_;
   rviz::BoolProperty *prop_cam_reset_;
+  rviz::BoolProperty *property_show_cursor_;
+  rviz::BoolProperty *property_show_cursor_axis_;
 
   rviz::RenderWidget *render_widget_;
   rviz::RenderWidget *render_widget_R_;
@@ -340,7 +346,6 @@ private:
   geometry_msgs::Pose PSM_initial_pose_[2]; 
   geometry_msgs::Pose PSM_pose_single_;
 
-
   rviz::FrameManager frame_manager_;
   std_msgs::Header cam_header_;
   double fx_;
@@ -350,7 +355,6 @@ private:
   double cy_;
   double img_height_;
   double img_width_;
-
 };
 
 } // namespace rvinci
