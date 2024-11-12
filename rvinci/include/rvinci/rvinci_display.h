@@ -234,7 +234,7 @@ private:
   bool left_grab_, right_grab_;
   bool left_released_, right_released_;
   bool MTM_mm_;
-  bool PSM_mm_;
+  bool sys_init_;
   bool teleop_mode_;
   bool Mono_mode_;
   bool coag_init_;

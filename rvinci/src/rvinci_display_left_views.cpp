@@ -43,7 +43,6 @@ rvinciDisplay::rvinciDisplay()
   , camera_offset_(0.0,0.0,1.0)
   , single_psm_mode_(false)
   , first_point_set_(false)
-  , sys_init_(true)
 {
   std::string rviz_path = ros::package::getPath(ROS_PACKAGE_NAME);
   Ogre::ResourceGroupManager::getSingleton().addResourceLocation( rviz_path + "/ogre_media", "FileSystem", ROS_PACKAGE_NAME );
@@ -72,7 +71,7 @@ rvinciDisplay::rvinciDisplay()
   camera_[_LEFT] = 0;
   camera_[_RIGHT]= 0;
 
-  camera_ipd_ = Ogre::Vector3(0.0,0.0,0.0);
+  camera_ipd_ = Ogre::Vector3(1,1,1);
 
   buffer_[0] = NULL;
   buffer_[1] = NULL;
@@ -114,7 +113,6 @@ rvinciDisplay::~rvinciDisplay()
   window_R_ = 0;
   delete render_widget_;
   delete render_widget_R_;
-//  delete prop_manual_coords_;
   delete prop_cam_focus_;
   delete prop_camera_posit_;
   delete prop_input_scalar_;
@@ -152,11 +150,11 @@ void rvinciDisplay::onInitialize()
 
   pubsubSetup();
 
-  MTM_mm_ = true;
   start_measurement_PSM_[_LEFT] = false;
   start_measurement_PSM_[_RIGHT] = false;
   gravity_published_ = false;
   wrench_published_ = false;
+  MTM_mm_ = true;
   left_grab_ = false;
   right_grab_ = false;
   Mono_mode_ = false;
@@ -178,66 +176,35 @@ void rvinciDisplay::onInitialize()
 
 void rvinciDisplay::update(float wall_dt, float ros_dt)
 {
-  if( backgroundImage_[0] != NULL ){
+  if( backgroundImage_[0] != NULL )
+  {
     Ogre::Box b( 0, 0, 0,  
 		 backgroundImage_[0]->getWidth(),
 		 backgroundImage_[0]->getHeight(), 1 );
     texture_[0]->getBuffer()->blitFromMemory( backgroundImage_[0]->getPixelBox(), b );
   }
 
-  if( backgroundImage_[1] != NULL ){
+  if( backgroundImage_[1] != NULL )
+  {
     Ogre::Box b( 0, 0, 0,
 		 backgroundImage_[1]->getWidth(),
 		 backgroundImage_[1]->getHeight(), 1 );
     texture_[1]->getBuffer()->blitFromMemory( backgroundImage_[1]->getPixelBox(), b );
   }
 
-  cameraUpdate();
+  // Explicitly update render windows in a synchronized manner
   window_ = render_widget_->getRenderWindow();
-  window_->update(false);
+  window_->update(false);  // Update the left window
+
   window_R_ = render_widget_R_->getRenderWindow();
-  window_R_->update(false);
+  window_R_->update(false);  // Update the right window
 
   rvmsg_.header.stamp = ros::Time::now();
   publisher_rvinci_.publish(rvmsg_);
 
   publishMeasurementMarkers();
-
-  // ROS_INFO_STREAM("Wrench: " << wrench_published_);
-  // ROS_INFO_STREAM("Gravity: " << gravity_published_);
-
-  if (teleop_mode_){
-    if (coag_mode_ && clutch_mode_) wrench_published_ = true;
-    else wrench_published_ = false;
-
-    if (wrench_published_) 
-    { 
-      ROS_INFO_STREAM("Publish Wrench\n");
-      publishWrench();
-      wrench_published_ = false;
-    }
-
-    if (wrench_published_ && !gravity_published_)
-    {
-    
-      gravity_published_ = true;
-    }
-  }
-  else{
-    // ROS_INFO_STREAM("MTM\n");
-    gravity_published_ = true;
-  }
-
-  if (gravity_published_) {
-    // ROS_INFO_STREAM("Publish Gravity\n"); 
-    if(sys_init_){
-      ROS_INFO_STREAM("system init: " << sys_init_); 
-      publishWrench();
-    }
-    sys_init_ = false;
-    publishGravity();
-  }
 }
+
 
 //void rvinciDisplay::reset(){}
 void rvinciDisplay::pubsubSetup()
@@ -278,16 +245,19 @@ void rvinciDisplay::pubsubSetup()
 
 void rvinciDisplay::leftCallback(const sensor_msgs::ImageConstPtr& img)
 {
-
   if( buffer_[0] == NULL )
-    { buffer_[0] = (unsigned char*)malloc( sizeof(unsigned char*)*img->height*img->step ); }
+  {
+    buffer_[0] = (unsigned char*)malloc( sizeof(unsigned char*) * img->height * img->step );
+  }
 
-  if( backgroundImage_[0] == NULL ){
+  if( backgroundImage_[0] == NULL )
+  {
     backgroundImage_[0] = new Ogre::Image;
     backgroundImage_[0]->loadDynamicImage(buffer_[0], img->width, img->height, 1, Ogre::PF_BYTE_RGB);
   }
 
-  if( texture_[0].isNull() ){
+  if( texture_[0].isNull() )
+  {
     texture_[0] = Ogre::TextureManager::getSingleton().createManual("BackgroundTextureLeft",
                     Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
                     Ogre::TEX_TYPE_2D,
@@ -298,15 +268,16 @@ void rvinciDisplay::leftCallback(const sensor_msgs::ImageConstPtr& img)
     texture_[0]->loadImage( *(backgroundImage_[0]) );
   }
 
-  if( material_[0].isNull() ){
+  if( material_[0].isNull() )
+  {
     material_[0] = Ogre::MaterialManager::getSingleton().create("BackgroundMaterialLeft", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
     material_[0]->getTechnique(0)->getPass(0)->createTextureUnitState("BackgroundTextureLeft");
     material_[0]->getTechnique(0)->getPass(0)->setDepthCheckEnabled(false);
-    material_[0]->getTechnique(0)->getPass(0)->setDepthWriteEnabled(false);
-    material_[0]->getTechnique(0)->getPass(0)->setLightingEnabled(false);
+    material_[0]->getTechnique(0)->setLightingEnabled(false);
   }
 
-  if( rect_[0] == NULL ){
+  if( rect_[0] == NULL )
+  {
     rect_[0] = new Ogre::Rectangle2D(true);
     rect_[0]->setCorners(-1.0, 1.0, 1.0, -1.0);
     rect_[0]->setMaterial("BackgroundMaterialLeft");
@@ -317,11 +288,67 @@ void rvinciDisplay::leftCallback(const sensor_msgs::ImageConstPtr& img)
     aabInf.setInfinite();
     rect_[0]->setBoundingBox(aabInf);
     image_node_->attachObject(rect_[0]);
-
   }
 
-  memcpy( (void*)buffer_[0], (void*)img->data.data(), img->step*img->height );
+  // Copy image data to the left buffer
+  memcpy( (void*)buffer_[0], (void*)img->data.data(), img->step * img->height );
+
+  // Allocate resources for the right view independently using left image data
+  if( buffer_[1] == NULL )
+  {
+    buffer_[1] = (unsigned char*)malloc( sizeof(unsigned char*) * img->height * img->step );
+  }
+
+  if( backgroundImage_[1] == NULL )
+  {
+    backgroundImage_[1] = new Ogre::Image;
+    backgroundImage_[1]->loadDynamicImage(buffer_[1], img->width, img->height, 1, Ogre::PF_BYTE_RGB);
+  }
+
+  if( texture_[1].isNull() )
+  {
+    texture_[1] = Ogre::TextureManager::getSingleton().createManual("BackgroundTextureRight",
+                    Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                    Ogre::TEX_TYPE_2D,
+                    img->width, img->height, 
+                    0, 
+                    Ogre::PF_BYTE_BGR,
+                    Ogre::TU_DYNAMIC_WRITE_ONLY_DISCARDABLE);
+    texture_[1]->loadImage( *(backgroundImage_[1]) );
+  }
+
+ if (material_[1].isNull())
+  {
+      material_[1] = Ogre::MaterialManager::getSingleton().create("BackgroundMaterialRight", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+      material_[1]->getTechnique(0)->getPass(0)->createTextureUnitState("BackgroundTextureRight");
+      material_[1]->getTechnique(0)->getPass(0)->setDepthCheckEnabled(false);
+      material_[1]->getTechnique(0)->setLightingEnabled(false);
+  }
+  
+  if( rect_[1] == NULL )
+  {
+    rect_[1] = new Ogre::Rectangle2D(true);
+    rect_[1]->setCorners(-1.0, 1.0, 1.0, -1.0);
+    rect_[1]->setMaterial("BackgroundMaterialRight");
+    rect_[1]->setRenderQueueGroup(Ogre::RENDER_QUEUE_BACKGROUND);
+    rect_[1]->setVisibilityFlags( 0xF0 );
+
+    Ogre::AxisAlignedBox aabInf;
+    aabInf.setInfinite();
+    rect_[1]->setBoundingBox(aabInf);
+    image_node_->attachObject(rect_[1]);
+  }
+
+  // Copy image data from left buffer to right buffer
+  memcpy( (void*)buffer_[1], (void*)buffer_[0], img->step * img->height );
+
+  // Ensure both views are updated
+  if (window_) window_->update(false);
+  if (window_R_) window_R_->update(false);
 }
+
+
+
 
 void rvinciDisplay::rightCallback(const sensor_msgs::ImageConstPtr& img){
 
@@ -571,13 +598,13 @@ void rvinciDisplay::cameraUpdate()
   camera_[_RIGHT]->setCustomProjectionMatrix(true, proj_matrix);
 
   camera_[_LEFT]->setPosition(camera_pos_);
-  // camera_[_LEFT]->lookAt(0, 0, 0);
+  camera_[_LEFT]->lookAt(0, 0, 0);
   camera_[_LEFT]->setOrientation(camera_ori_);
 
   Ogre::Vector3 baseline_offset = baseline * right;
 
   camera_[_RIGHT]->setPosition(camera_pos_ + baseline_offset);
-  // camera_[_RIGHT]->lookAt(0, 0, 0);
+  camera_[_RIGHT]->lookAt(0, 0, 0);
   camera_[_RIGHT]->setOrientation(camera_ori_);
 
   frame_manager_.setFixedFrame("base_link");
@@ -626,13 +653,13 @@ visualization_msgs::Marker rvinciDisplay::makeMarker(geometry_msgs::Pose p, int 
   marker.action = visualization_msgs::Marker::ADD;
 
   marker.pose = p; 
-  marker.scale.x = 0.085;
-  marker.scale.y = 0.085;
-  marker.scale.z = 0.085;
+  marker.scale.x = 0.2;
+  marker.scale.y = 0.2;
+  marker.scale.z = 0.2;
   marker.color.r = 0.5;
   marker.color.g = 0.5;
   marker.color.b = 0.5;
-  marker.color.a = 0.75;
+  marker.color.a = 0.7;
 
   marker.lifetime = ros::Duration();
   return marker;
@@ -684,7 +711,7 @@ visualization_msgs::Marker rvinciDisplay::makeLineMarker(geometry_msgs::Point p1
 
   marker.points.push_back(p1);
   marker.points.push_back(p2);
-  marker.scale.x = 0.02;
+  marker.scale.x = 0.05;
   marker.color.b = 0.8;
   marker.color.a = 0.7;
 
@@ -727,6 +754,7 @@ void rvinciDisplay::publishMeasurementMarkers()
           flag_delete_marker_ = false;
         }
         break;
+
       case _START_MEASUREMENT:
         marker_arr.markers.push_back(makeTextMessage(text_pose, "Start MTM measurement", _STATUS_TEXT));
         marker_arr.markers.push_back(makeMarker(cursor_[_LEFT], _START_POINT));
@@ -738,7 +766,7 @@ void rvinciDisplay::publishMeasurementMarkers()
       case _MOVING:
         marker_arr.markers.push_back(makeTextMessage(text_pose, "MTM moving", _STATUS_TEXT));
         marker_arr.markers.push_back(makeTextMessage(distance_pose, 
-          std::to_string(calculateDistance(cursor_[_LEFT], cursor_[_RIGHT]) * 11.5) + " mm", _DISTANCE_TEXT));
+          std::to_string(calculateDistance(cursor_[_LEFT], cursor_[_RIGHT]) * 10) + " mm", _DISTANCE_TEXT));
         marker_arr.markers.push_back(makeMarker(cursor_[_LEFT], _START_POINT));
         marker_arr.markers.push_back(makeMarker(cursor_[_RIGHT], _END_POINT));
 
@@ -751,7 +779,7 @@ void rvinciDisplay::publishMeasurementMarkers()
       case _END_MEASUREMENT:
         marker_arr.markers.push_back(makeTextMessage(text_pose, "MTM end measurement", _STATUS_TEXT));
         marker_arr.markers.push_back(makeTextMessage(distance_pose, 
-          std::to_string(calculateDistance(measurement_start_, measurement_end_) * 11.5) + " mm", _DISTANCE_TEXT));
+          std::to_string(calculateDistance(measurement_start_, measurement_end_) * 10) + " mm", _DISTANCE_TEXT));
         marker_arr.markers.push_back(makeMarker(measurement_start_, _START_POINT));
         marker_arr.markers.push_back(makeMarker(measurement_end_, _END_POINT));
         marker_arr.markers.push_back(makeLineMarker(measurement_start_.position, measurement_end_.position, uniqueLineMarkerID()));
@@ -852,13 +880,13 @@ void rvinciDisplay::clutchCallback(const sensor_msgs::Joy::ConstPtr& msg)
   // }
 
   // TODO: use clutch for debugging for now
-//   ROS_INFO_STREAM("Camera Left Position: " << camera_[_LEFT]->getPosition());
-//   ROS_INFO_STREAM("Camera Right Position: " << camera_[_RIGHT]->getPosition());
-//   ROS_INFO_STREAM("Camera Left Orientation: " << camera_[_LEFT]->getOrientation());
-//   ROS_INFO_STREAM("Camera Right Orientation: " << camera_[_RIGHT]->getOrientation());
+  // ROS_INFO_STREAM("Camera Left Position: " << camera_[_LEFT]->getPosition());
+  // ROS_INFO_STREAM("Camera Right Position: " << camera_[_RIGHT]->getPosition());
+  // ROS_INFO_STREAM("Camera Left Orientation: " << camera_[_LEFT]->getOrientation());
+  // ROS_INFO_STREAM("Camera Right Orientation: " << camera_[_RIGHT]->getOrientation());
 
-//   ROS_INFO_STREAM("Projection Matrix: " << proj_matrix);
-//   ROS_INFO_STREAM("Marker Position: " << marker.pose.position.x << ", " << marker.pose.position.y << ", " << marker.pose.position.z);
+  // ROS_INFO_STREAM("Projection Matrix: " << proj_matrix);
+  // ROS_INFO_STREAM("Marker Position: " << marker.pose.position.x << ", " << marker.pose.position.y << ", " << marker.pose.position.z);
 }
 
 void rvinciDisplay::cameraCallback(const sensor_msgs::Joy::ConstPtr& msg) 
@@ -1064,7 +1092,7 @@ void rvinciDisplay::publishWrench()
   wr.header.stamp = ros::Time::now();
   wr.wrench.force.x = wr.wrench.force.y = wr.wrench.force.z = 0;
   wr.wrench.torque.x = wr.wrench.torque.y = wr.wrench.torque.z = 0;
-  for (int i=0; i<10; i++) 
+  for (int i=0; i<5; i++) 
   {
     publisher_lwrench_.publish(wr);
     publisher_rwrench_.publish(wr);
@@ -1075,7 +1103,7 @@ void rvinciDisplay::publishGravity()
 {
   std_msgs::Bool gravity;
   gravity.data = true;
-  for (int i=0; i<10; i++) 
+  for (int i=0; i<5; i++) 
   {
     publisher_lgravity_.publish(gravity);
     publisher_rgravity_.publish(gravity);
