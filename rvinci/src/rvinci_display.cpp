@@ -204,9 +204,6 @@ void rvinciDisplay::update(float wall_dt, float ros_dt)
   publisher_rvinci_.publish(rvmsg_);
 
   publishMeasurementMarkers();
-<<<<<<< HEAD
-  
-=======
 
   // ROS_INFO_STREAM("Wrench: " << wrench_published_);
   // ROS_INFO_STREAM("Gravity: " << gravity_published_);
@@ -242,7 +239,6 @@ void rvinciDisplay::update(float wall_dt, float ros_dt)
     sys_init_ = false;
     publishGravity();
   }
->>>>>>> VANESSA
 }
 
 //void rvinciDisplay::reset(){}
@@ -1062,9 +1058,10 @@ void rvinciDisplay::cameraInfoCallback(const sensor_msgs::CameraInfo::ConstPtr& 
 
 double rvinciDisplay::calculateDistance(geometry_msgs::Pose p1, geometry_msgs::Pose p2)
 {
-  return std::sqrt( std::pow(p1.position.x-p2.position.x, 2)
-                    + std::pow(p1.position.y-p2.position.y, 2)
-                    + std::pow(p1.position.z-p2.position.z, 2) );
+  double distance = std::sqrt( std::pow(p1.position.x-p2.position.x, 2)
+                               + std::pow(p1.position.y-p2.position.y, 2)
+                               + std::pow(p1.position.z-p2.position.z, 2) );
+  return std::round(distance * 10.0) / 10.0; // Round to 1 decimal place
 }
 
 void rvinciDisplay::publishWrench()
