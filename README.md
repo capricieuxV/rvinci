@@ -53,6 +53,11 @@ To launch rvinci:
 ```bash
 roslaunch rvinci rvinci_rviz.launch
 ```
+To launch rvinci full system:
+```bash
+roslaunch rvinci rvinci_full_sys.launch
+```
+
 To launch rvinci with buttons to select the mode for the measurement tool:
 ```bash
 roslaunch rvinci rvinci_with_button.launch
@@ -91,7 +96,10 @@ Save results:
 - Move the two .yaml files to /home//catkin_ws/src/cisst-saw/sawIntuitiveResearchKit/share/jhu-daVinci
 
 ## PSM position adjustment
-- Changed the json file for MTMR-PSM1-MTML-PSM2-Teleop.json
-- Translational postion of PSM1 & PSM2 were +0.2 & -0.2 before, now it is +0.1440 & -0.1410 (based on how we set up the hardware) 
+- Changed the json file for MTMR-PSM1-MTML-PSM2-Teleop
+- Translational postion of PSM1 & PSM2 were +0.2 & -0.2 before, now it is +0.1440 & -0.1410 (based on how we wet up the hardware) 
+
+## Untar calibration.tar file and there will be 'left.yaml' and 'right.yaml'
+## Move the two .yaml files to /home/<user>/catkin_ws/src/cisst-saw/sawIntuitiveResearchKit/share/jhu-daVinci
 
 

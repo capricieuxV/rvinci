@@ -42,7 +42,7 @@ rvinciDisplay::rvinciDisplay()
   , window_(0)
   , window_R_(0)
   // , camera_offset_(0.0,-3.0,1.5)
-  , camera_offset_(0.0,0.0,1.0)
+  , camera_offset_(0.0,0.0,0.0)
   , single_psm_mode_(false)
   , first_point_set_(false)
   , sys_init_(true)
@@ -573,13 +573,13 @@ void rvinciDisplay::cameraUpdate()
   camera_[_RIGHT]->setCustomProjectionMatrix(true, proj_matrix);
 
   camera_[_LEFT]->setPosition(camera_pos_);
-  // camera_[_LEFT]->lookAt(0, 0, 0);
+  camera_[_LEFT]->lookAt(0, 0, 0);
   camera_[_LEFT]->setOrientation(camera_ori_);
 
   Ogre::Vector3 baseline_offset = baseline * right;
 
   camera_[_RIGHT]->setPosition(camera_pos_ + baseline_offset);
-  // camera_[_RIGHT]->lookAt(0, 0, 0);
+  camera_[_RIGHT]->lookAt(0, 0, 0);
   camera_[_RIGHT]->setOrientation(camera_ori_);
 
   frame_manager_.setFixedFrame("base_link");
